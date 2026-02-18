@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+  <style>
+    .Line {
+      width: calc(100% - 6px);
+      height: 2px;
+      background-color: #808080;
+      display: block;
+    }
+
+    #MessageInput {
+      width: calc(99% - 6px);
+      padding: 5px;
+      border-radius: 8px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 2px;
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
+      bottom: 4px;
+      left: calc(0.5% - 1px);
+      position: fixed;
+    }
+
+    #MessageInput:focus {
+      outline-color: blue;
+      outline-style: solid;
+      outline-width: 2px;
+    }
+
+    .Time {
+      font-size: 50%;
+      font-weight: bold;
+      color: #888;
+    }
+
+    #Messages {
+      height: calc(100vh - 170px);
+      overflow: auto;
+      border: solid white 1px;
+      border: none;
+      padding: 0px;
+    }
+  </style>
+</head>
+<body style="background-color: black; color: white; font-family: 'Nunito';">
+  <h1>Server</h1>
+  <div class="Line"></div>
+  <br>
+  <div id="Messages"></div>
+  <input id="MessageInput">
+  <button id="SendButton">Send</button>
+  <script src="./main.js"></script>
+</body>
+</html>
