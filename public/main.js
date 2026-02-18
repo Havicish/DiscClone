@@ -40,7 +40,8 @@ class Message {
 }
 
 function clearAllMessages() {
-  for (let i in messages) {
+  const initLen = messages.length;
+  for (let i = 0; i < initLen; i++) {
     messages.pop();
   }
 }

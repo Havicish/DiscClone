@@ -21,10 +21,8 @@
       display: block;
     }
 
-    #MessageInput {
-      width: calc(99% - 6px);
-      padding: 5px;
-      border-radius: 8px;
+    input {
+      border-radius: 4px;
       border: none;
       outline-color: white;
       outline-style: solid;
@@ -32,39 +30,57 @@
       background-color: black;
       color: white;
       font-family: 'Nunito';
-      bottom: 4px;
-      left: calc(0.5% - 1px);
-      position: fixed;
     }
 
-    #MessageInput:focus {
+    input:focus {
       outline-color: blue;
       outline-style: solid;
       outline-width: 2px;
     }
 
-    .Time {
-      font-size: 50%;
-      font-weight: bold;
-      color: #888;
+    button {
+      border-radius: 4px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 2px;
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
     }
 
-    #Messages {
-      height: calc(100vh - 170px);
-      overflow: auto;
-      border: solid white 1px;
-      border: none;
-      padding: 0px;
+    button:focus {
+      outline-color: blue;
+      outline-style: solid;
+      outline-width: 2px;
+    }
+
+    button:hover {
+      background-color: white;
+      color: black;
+    }
+
+    button:active {
+      background-color: gray;
+      color: black;
     }
   </style>
 </head>
 <body>
-  <h1>Server</h1>
+  <h1>Sign in</h1>
   <div class="Line"></div>
   <br>
-  <div id="Messages"></div>
-  <input id="MessageInput">
-  <button id="SendButton">Send</button>
-  <script src="./main.js"></script>
+  <label for="Username">Username:</label>
+  <input id="Username">
+  <br>
+  <br>
+  <label for="Password">Password:</label>
+  <input id="Password" type="password">
+  <br>
+  <br>
+  <button id="SignInButton">Sign in</button>
+  <span>‎‎</span>
+  <button id="CreateAccountButton">Create account</button>
+  <script src="./sign-in-main.js"></script>
 </body>
 </html>

@@ -60,5 +60,6 @@ module.exports = {
 };
 
 setImmediate(() => {
-  require("./messageHandler");
+  require("./message-handler");
+  require("./account-handler");
 });
