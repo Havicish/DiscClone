@@ -2,7 +2,11 @@ window.addEventListener("error", (err) => {
   alert(err.error);
 });
 
-let backendURL = "http://localhost:3000";
+let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
+backendURL = location.origin;
+
+let currentUsername = null;
+let currentLoginToken = null;
 
 const messages = [];
 
@@ -49,7 +53,6 @@ function clearAllMessages() {
 function clearAllRenderedMessages(messagesDiv) {
   Array.from(messagesDiv.children).forEach((child) => {
     child.remove();
-    console.log("Removed child");
   });
 }
 
@@ -68,22 +71,25 @@ function getNewMessages(timeAfter) {
   fetch(backendURL + "/getMessages" + "?after=" + timeAfter)
     .then((response) => response.json())
     .then((data) => {
-      clearAllRenderedMessages(document.getElementById("Messages"));
-      clearAllMessages();
-      data.forEach((msg) => {
-        createMessage(msg.username, msg.message, msg.timeCreated);
-      });
-      renderAllMessages(document.getElementById("Messages"));
+      if (data.length > 0) {
+        clearAllMessages();
+        data.forEach((msg) => {
+          createMessage(msg.username, msg.message, msg.timeCreated);
+        });
+        const messagesDiv = document.getElementById("Messages");
+        clearAllRenderedMessages(messagesDiv);
+        renderAllMessages(messagesDiv);
+      }
     });
 }
 
-function sendMessage(username, message) {
+function sendMessage(username, message, loginToken) {
   fetch(backendURL + "/sendMessage", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ username, message }),
+    body: JSON.stringify({ username, message, loginToken }),
   }).then((response) => response.json())
     .then((data) => {
       if (data.status === "ok") {
@@ -97,6 +103,44 @@ getNewMessages(0);
 document.getElementById("SendButton").addEventListener("click", (e) => {
   const messageInput = document.getElementById("MessageInput");
 
-  sendMessage("User", messageInput.value);
+  sendMessage(currentUsername, messageInput.value, currentLoginToken);
   messageInput.value = "";
 });
+
+document.addEventListener("keydown", (event) => {
+  if (event.key == "Enter")
+    document.getElementById("SendButton").click();
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const loginToken = localStorage.getItem("loginToken");
+  if (!loginToken) {
+    window.location.href = "/sign-in.html";
+    return;
+  }
+
+  currentLoginToken = loginToken;
+
+  // check if token is valid, and sign in
+  fetch(backendURL + "/getAccountInfo", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ loginToken }),
+  }).then((response) => response.json())
+    .then((data) => {
+      if (data.success) {
+        currentUsername = data.username;
+      } else {
+        localStorage.removeItem("loginToken");
+        window.location.href = "/sign-in.html";
+      }
+    });
+});
+
+setInterval(() => {
+  const lastMessage = messages[messages.length - 1];
+  const lastTime = lastMessage ? lastMessage.timeCreated : 0;
+  getNewMessages(lastTime);
+}, 3000);

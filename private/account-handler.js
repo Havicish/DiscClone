@@ -2,6 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { addAPIListener } = require("./server");
+const { log } = require("console");
 
 const accountsFilePath = path.join(__dirname, "accounts.json");
 
@@ -24,6 +25,13 @@ class Account {
       Date.now() + daysUntilExpiration * 24 * 60 * 60 * 1000;
 
     return this.currentLoginToken;
+  }
+
+  getLoginToken() {
+    if (this.currentLoginToken && Date.now() < this.loginTokenExpirationDate)
+      return this.currentLoginToken;
+
+    return this.generateNewLoginToken();
   }
 
   attemptLogin(password) {
@@ -50,13 +58,36 @@ let accounts = loadAccounts();
 
 function loadAccounts() {
   if (!fs.existsSync(accountsFilePath))
-    return [];
+    return {};
 
   const data = fs.readFileSync(accountsFilePath, "utf8");
-  return JSON.parse(data);
+  let parsedAccounts = JSON.parse(data);
+
+  // Support older format where file could be an array
+  if (Array.isArray(parsedAccounts)) {
+    const obj = {};
+    for (const a of parsedAccounts) {
+      if (a && a.username) obj[a.username] = a;
+    }
+    parsedAccounts = obj;
+  }
+
+  const result = {};
+  for (let username in parsedAccounts) {
+    const accData = parsedAccounts[username];
+    const newAccount = new Account(accData.username, accData.password);
+    for (let key in accData) {
+      if (key in newAccount)
+        newAccount[key] = accData[key];
+    }
+    result[newAccount.username] = newAccount;
+  }
+
+  return result;
 }
 
 function saveAccounts() {
+  console.log(accounts);
   fs.writeFileSync(
     accountsFilePath,
     JSON.stringify(accounts, null, 2)
@@ -64,12 +95,14 @@ function saveAccounts() {
 }
 
 function findAccountByUsername(username) {
-  for (const key in accounts) {
-    const acc = accounts[key];
+  return accounts[username] || null;
+}
 
-    if (acc.username == username) {
-      return acc;
-    }
+function findAccountByLoginToken(token) {
+  for (const username in accounts) {
+    const account = accounts[username];
+    if (account.currentLoginToken === token)
+      return account;
   }
 
   return null;
@@ -102,6 +135,65 @@ addAPIListener("/createAccount", (req, res) => {
     accounts[username] = newAccount;
     saveAccounts();
 
-    return sendJson(res, { success: true });
+    return sendJson(res, { success: true, loginToken: newAccount.getLoginToken() });
   });
 });
+
+addAPIListener("/login", (req, res) => {
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk;
+  });
+
+  req.on("end", () => {
+    const data = JSON.parse(body);
+    const username = data.username;
+    const password = data.password;
+
+    if (!username || !password)
+      return sendJson(res, { success: false, message: "Missing fields" });
+
+    const account = findAccountByUsername(username);
+
+    if (!account)
+      return sendJson(res, { success: false, message: "Invalid username or password" });
+
+    if (!account.attemptLogin(password)) {
+      saveAccounts();
+      return sendJson(res, { success: false, message: "Invalid username or password" });
+    }
+
+    const token = account.getLoginToken();
+    saveAccounts();
+
+    return sendJson(res, { success: true, loginToken: token });
+  });
+});
+
+addAPIListener("/getAccountInfo", (req, res) => {
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk;
+  });
+
+  req.on("end", () => {
+    const data = JSON.parse(body);
+    const token = data.loginToken;
+
+    if (!token)
+      return sendJson(res, { success: false, message: "Missing login token" });
+
+    const account = findAccountByLoginToken(token);
+
+    if (!account)
+      return sendJson(res, { success: false, message: "Invalid login token" });
+
+    return sendJson(res, { success: true, username: account.username });
+  });
+});
+
+module.exports = {
+  findAccountByLoginToken,
+};

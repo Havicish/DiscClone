@@ -22,8 +22,8 @@
     }
 
     #MessageInput {
-      width: calc(99% - 6px);
-      padding: 5px;
+      width: calc(99% - 16px);
+      padding: 10px;
       border-radius: 8px;
       border: none;
       outline-color: white;
@@ -56,6 +56,39 @@
       border: none;
       padding: 0px;
     }
+
+    #SendButton {
+      height: 34px;
+      width: 34px;
+      padding: 0px;
+      border-radius: 8px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 2px;
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
+      bottom: 6px;
+      right: 8px;
+      position: fixed;
+    }
+
+    #SendButton:focus {
+      outline-color: blue;
+      outline-style: solid;
+      outline-width: 2px;
+    }
+
+    #SendButton:hover {
+      background-color: white;
+      color: black;
+    }
+
+    #SendButton:active {
+      background-color: gray;
+      color: black;
+    }
   </style>
 </head>
 <body>
@@ -64,7 +97,7 @@
   <br>
   <div id="Messages"></div>
   <input id="MessageInput">
-  <button id="SendButton">Send</button>
+  <button id="SendButton">></button>
   <script src="./main.js"></script>
 </body>
 </html>

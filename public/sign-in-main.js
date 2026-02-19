@@ -1,4 +1,5 @@
 const createAccountButton = document.getElementById("CreateAccountButton");
+const loginButton = document.getElementById("SignInButton");
 
 createAccountButton.addEventListener("click", () => {
   const username = document.getElementById("Username").value;
@@ -14,9 +15,34 @@ createAccountButton.addEventListener("click", () => {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
+      document.localStorage.setItem("loginToken", data.loginToken);
       alert("Account created successfully!");
+      window.location.href = "/";
     } else {
       alert("Error creating account: " + data.message);
+    }
+  });
+});
+
+loginButton.addEventListener("click", () => {
+  const username = document.getElementById("Username").value;
+  const password = document.getElementById("Password").value;
+
+  fetch("/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ username, password })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert("Login successful!");
+      localStorage.setItem("loginToken", data.loginToken);
+      window.location.href = "/";
+    } else {
+      alert("Error logging in: " + data.message);
     }
   });
 });
