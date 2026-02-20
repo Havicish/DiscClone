@@ -88,7 +88,7 @@ function getNewMessages(timeAfter, serverId) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ after: timeAfter, serverId: serverId }),
+    body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken }),
   }).then((response) => response.json())
     .then((data) => {
       if (data.length > 0) {
@@ -118,7 +118,21 @@ function sendMessage(username, message, loginToken, serverId) {
     });
 }
 
-getNewMessages(0, currentServerId);
+function getServerName(loginToken, serverId) {
+  fetch(backendURL + "/getServerName", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ loginToken, serverId }),
+  }).then((response) => response.json())
+    .then((data) => {
+      if (typeof data == "string")
+        document.getElementById("ServerName").innerText = data;
+      else
+        document.getElementById("ServerName").innerText = "Access denied";
+    });
+}
 
 document.getElementById("SendButton").addEventListener("click", (e) => {
   const messageInput = document.getElementById("MessageInput");
@@ -152,6 +166,8 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((data) => {
       if (data.success) {
         currentUsername = data.username;
+        getNewMessages(0, currentServerId);
+        getServerName(currentLoginToken, currentServerId);
       } else {
         localStorage.removeItem("loginToken");
         window.location.href = "/sign-in.html";

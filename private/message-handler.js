@@ -36,12 +36,6 @@ function findOrAddAccount(token) {
 }
 
 addAPIListener("/getMessages", (req, res) => {
-  // const url = new URL(req.url, `http://${req.headers.host}`);
-  // const after = parseInt(url.searchParams.get("after")) || 0;
-  // const newMessages = messages.filter((msg) => msg.timeCreated > after);
-  // res.writeHead(200, { "Content-Type": "application/json" });
-  // res.end(JSON.stringify(newMessages));
-
   let body = "";
   req.on("data", (chunk) => {
     body += chunk.toString();
@@ -50,18 +44,17 @@ addAPIListener("/getMessages", (req, res) => {
     const data = JSON.parse(body);
     const after = parseInt(data.after) || 0;
     const serverId = data.serverId;
-    console.log(data);
     const server = servers[serverId];
     if (!server) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
     }
-    // if (!server.usernames.includes(findOrAddAccount(data.loginToken).username)) {
-    //   res.writeHead(403, { "Content-Type": "application/json" });
-    //   res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-    //   return;
-    // }
+    if (!server.whitelist.includes(findOrAddAccount(data.loginToken).username)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
     const newMessages = server.messages.filter((msg) => msg.timeCreated > after);
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(newMessages));

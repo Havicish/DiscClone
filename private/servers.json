@@ -6,7 +6,78 @@
         "username": "Havicish",
         "message": "test",
         "timeCreated": 1771556399797
+      },
+      {
+        "username": "Havicish",
+        "message": "test",
+        "timeCreated": 1771571109187
+      },
+      {
+        "username": "Havicish",
+        "message": "once more",
+        "timeCreated": 1771571124635
+      },
+      {
+        "username": "Havicish",
+        "message": "test",
+        "timeCreated": 1771571139368
+      },
+      {
+        "username": "Havicish",
+        "message": "test",
+        "timeCreated": 1771571202272
+      },
+      {
+        "username": "Havicish",
+        "message": "peak",
+        "timeCreated": 1771571647791
+      },
+      {
+        "username": "Havicish",
+        "message": "testagain",
+        "timeCreated": 1771571697688
       }
+    ],
+    "whitelist": [
+      "Havicish"
+    ]
+  },
+  "32d58460-8333-4efe-9f5a-064c273757b3": {
+    "name": "Test Server 2222",
+    "messages": [
+      {
+        "username": "Havicish",
+        "message": "test",
+        "timeCreated": 1771556399797
+      },
+      {
+        "username": "Havicish",
+        "message": "test",
+        "timeCreated": 1771571109187
+      },
+      {
+        "username": "Havicish",
+        "message": "once more",
+        "timeCreated": 1771571124635
+      },
+      {
+        "username": "Havicish",
+        "message": "te4567657st",
+        "timeCreated": 1771571139368
+      },
+      {
+        "username": "Havicish",
+        "message": "234",
+        "timeCreated": 1771571202272
+      },
+      {
+        "username": "Havicish",
+        "message": "peak",
+        "timeCreated": 1771571647791
+      }
+    ],
+    "whitelist": [
+      ""
     ]
   }
 }

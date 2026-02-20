@@ -1,11 +1,14 @@
 const fs = require("fs");
 const path = require("path");
+const { addAPIListener } = require("./server");
+const findAccountByLoginToken = require("./account-handler").findAccountByLoginToken;
 
 class Server {
   constructor() {
     this.name = "";
     this.id = null;
     this.messages = [];
+    this.whitelist = [];
   }
 
   loadMessages() {
@@ -30,6 +33,7 @@ class Server {
     serversData[this.id] = {
       name: this.name,
       messages: this.messages,
+      whitelist: this.whitelist,
     };
 
     fs.writeFileSync(serversFilePath, JSON.stringify(serversData, null, 2));
@@ -54,6 +58,7 @@ function loadServers() {
     server.id = id;
     server.name = serverInfo.name;
     server.messages = serverInfo.messages || [];
+    server.whitelist = serverInfo.whitelist || [];
     servers[id] = server;
   }
 }
@@ -70,6 +75,45 @@ function saveServers() {
   }
   fs.writeFileSync(serversFilePath, JSON.stringify(serversData, null, 2));
 }
+
+const validatedUsernames = {};
+
+function findOrAddAccount(token) {
+  if (validatedUsernames[token])
+    return validatedUsernames[token];
+
+  const account = findAccountByLoginToken(token);
+  if (!account)
+    return null;
+
+  validatedUsernames[token] = account;
+  return account;
+}
+
+addAPIListener("/getServerName", (req, res) => {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+  req.on("end", () => {
+    const data = JSON.parse(body);
+    const serverId = data.serverId;
+    const server = servers[serverId];
+    if (!server) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    if (!server.whitelist.includes(findOrAddAccount(data.loginToken).username)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    const name = server.name;
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(name));
+  });
+});
 
 module.exports = {
   Server,
