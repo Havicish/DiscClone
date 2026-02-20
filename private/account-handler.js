@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { addAPIListener } = require("./server");
-const { log } = require("console");
 
 const accountsFilePath = path.join(__dirname, "accounts.json");
 
@@ -87,7 +86,6 @@ function loadAccounts() {
 }
 
 function saveAccounts() {
-  console.log(accounts);
   fs.writeFileSync(
     accountsFilePath,
     JSON.stringify(accounts, null, 2)

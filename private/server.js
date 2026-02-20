@@ -35,10 +35,14 @@ function getContentType(filePath) {
 const server = http.createServer((req, res) => {
   const requestedPath = req.url.split('?')[0];
   const apiListener = apiListeners.find(listener => listener.path === requestedPath);
+  //const servers = require("./server-handler").servers;
   if (apiListener) {
     apiListener.callback(req, res);
   } else {
-    const filePath = path.join(__dirname, '../public', req.url === '/' ? 'index.html' : req.url);
+    let filePath = path.join(__dirname, '../public', req.url === '/' ? 'index.html' : req.url);
+    if (req.url.includes("server/")) {
+      filePath = path.join(__dirname, '../public', req.url.length == 44 ? 'index.html' : req.url.substring(8));
+    }
     fs.readFile(filePath, (err, data) => {
       if (err) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });

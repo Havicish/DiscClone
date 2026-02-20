@@ -7,6 +7,7 @@ backendURL = location.origin;
 
 let currentUsername = null;
 let currentLoginToken = null;
+let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
 
 const messages = [];
 
@@ -67,9 +68,28 @@ function renderAllMessages(messagesDiv) {
   }
 }
 
-function getNewMessages(timeAfter) {
-  fetch(backendURL + "/getMessages" + "?after=" + timeAfter)
-    .then((response) => response.json())
+function getNewMessages(timeAfter, serverId) {
+  // fetch(backendURL + "/getMessages" + "?after=" + timeAfter + "?server")
+  //   .then((response) => response.json())
+  //   .then((data) => {
+  //     if (data.length > 0) {
+  //       clearAllMessages();
+  //       data.forEach((msg) => {
+  //         createMessage(msg.username, msg.message, msg.timeCreated);
+  //       });
+  //       const messagesDiv = document.getElementById("Messages");
+  //       clearAllRenderedMessages(messagesDiv);
+  //       renderAllMessages(messagesDiv);
+  //     }
+  //   });
+
+  fetch(backendURL + "/getMessages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ after: timeAfter, serverId: serverId }),
+  }).then((response) => response.json())
     .then((data) => {
       if (data.length > 0) {
         clearAllMessages();
@@ -83,27 +103,27 @@ function getNewMessages(timeAfter) {
     });
 }
 
-function sendMessage(username, message, loginToken) {
+function sendMessage(username, message, loginToken, serverId) {
   fetch(backendURL + "/sendMessage", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ username, message, loginToken }),
+    body: JSON.stringify({ username, message, loginToken, serverId }),
   }).then((response) => response.json())
     .then((data) => {
       if (data.status === "ok") {
-        getNewMessages(0);
+        getNewMessages(0, serverId);
       }
     });
 }
 
-getNewMessages(0);
+getNewMessages(0, currentServerId);
 
 document.getElementById("SendButton").addEventListener("click", (e) => {
   const messageInput = document.getElementById("MessageInput");
 
-  sendMessage(currentUsername, messageInput.value, currentLoginToken);
+  sendMessage(currentUsername, messageInput.value, currentLoginToken, currentServerId);
   messageInput.value = "";
 });
 
@@ -140,7 +160,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 setInterval(() => {
-  const lastMessage = messages[messages.length - 1];
-  const lastTime = lastMessage ? lastMessage.timeCreated : 0;
-  getNewMessages(lastTime);
-}, 3000);
+  getNewMessages(0, currentServerId);
+}, 2000);
