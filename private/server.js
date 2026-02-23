@@ -43,6 +43,9 @@ const server = http.createServer((req, res) => {
     if (req.url.includes("server/")) {
       filePath = path.join(__dirname, '../public', req.url.length == 44 ? 'index.html' : req.url.substring(8));
     }
+    if (req.url === "/") {
+      filePath = path.join(__dirname, '../public', 'server-select.html');
+    }
     fs.readFile(filePath, (err, data) => {
       if (err) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });

@@ -14,6 +14,7 @@ class Account {
     this.failedLogins = 0;
     this.maxFailedLoginAttempts = 5;
     this.lockedUntil = null;
+    this.servers = [];
   }
 
   generateNewLoginToken() {

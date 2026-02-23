@@ -9,6 +9,7 @@ class Server {
     this.id = null;
     this.messages = [];
     this.whitelist = [];
+    this.owner = null;
   }
 
   loadMessages() {
@@ -34,6 +35,7 @@ class Server {
       name: this.name,
       messages: this.messages,
       whitelist: this.whitelist,
+      owner: this.owner,
     };
 
     fs.writeFileSync(serversFilePath, JSON.stringify(serversData, null, 2));
@@ -112,6 +114,56 @@ addAPIListener("/getServerName", (req, res) => {
     const name = server.name;
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(name));
+  });
+});
+
+addAPIListener("/getServers", (req, res) => {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+  req.on("end", () => {
+    const data = JSON.parse(body);
+    const account = findOrAddAccount(data.loginToken);
+    if (!account) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    const serverList = account.servers.map(serverId => {
+      const server = servers[serverId];
+      return { id: serverId, name: server ? server.name : "Unknown Server" };
+    });
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(serverList));
+  });
+});
+
+addAPIListener("/createServer", (req, res) => {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+  req.on("end", () => {
+    const data = JSON.parse(body);
+    const account = findOrAddAccount(data.loginToken);
+    if (!account) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    const serverName = data.serverName;
+    const serverId = crypto.randomUUID();
+    const newServer = new Server();
+    newServer.id = serverId;
+    newServer.name = serverName;
+    newServer.owner = account.username;
+    newServer.whitelist.push(account.username);
+    servers[serverId] = newServer;
+    account.servers.push(serverId);
+    saveServers();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "ok", serverId }));
   });
 });
 

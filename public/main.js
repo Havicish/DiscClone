@@ -134,12 +134,41 @@ function getServerName(loginToken, serverId) {
     });
 }
 
-document.getElementById("SendButton").addEventListener("click", (e) => {
-  const messageInput = document.getElementById("MessageInput");
+function updateServerList(loginToken, callback) {
+  fetch(backendURL + "/getServers", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ loginToken }),
+  }).then((response) => response.json())
+    .then((data) => {
+      const serverListDiv = document.getElementById("ServerList");
+      Array.from(serverListDiv.children).forEach((child) => {
+        child.remove();
+      });
+      data.forEach((server) => {
+        const serverDiv = document.createElement("div");
+        serverDiv.className = "ServerListServer";
 
-  sendMessage(currentUsername, messageInput.value, currentLoginToken, currentServerId);
-  messageInput.value = "";
-});
+        const nameSpan = document.createElement("span");
+        nameSpan.innerText = server.name;
+
+        const openButton = document.createElement("button");
+        openButton.className = "OpenServer";
+        openButton.dataset.serverId = server.id;
+        openButton.innerText = "Open";
+        openButton.addEventListener("click", () => {
+          window.location.href = "/server/" + server.id;
+        });
+
+        serverDiv.appendChild(nameSpan);
+        serverDiv.appendChild(openButton);
+        serverListDiv.appendChild(serverDiv);
+      });
+      callback();
+    });
+}
 
 document.addEventListener("keydown", (event) => {
   if (event.key == "Enter")
@@ -154,6 +183,26 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   currentLoginToken = loginToken;
+
+  document.getElementById("SendButton").addEventListener("click", (e) => {
+    const messageInput = document.getElementById("MessageInput");
+
+    sendMessage(currentUsername, messageInput.value, currentLoginToken, currentServerId);
+    messageInput.value = "";
+  });
+
+  document.getElementById("OpenServersButton").addEventListener("click", (e) => {
+    if (document.getElementById("OpenServersButton").innerText === ">") {
+      document.getElementById("OpenServersButton").innerText = "...";
+      updateServerList(currentLoginToken, () => {
+        document.getElementById("OpenServersButton").innerText = "<";
+        document.getElementById("ServerList").style.display = "block";
+      });
+    } else {
+      document.getElementById("OpenServersButton").innerText = ">";
+      document.getElementById("ServerList").style.display = "none";
+    }
+  });
 
   // check if token is valid, and sign in
   fetch(backendURL + "/getAccountInfo", {

@@ -137,6 +137,7 @@
       border: solid white 1px;
       border-radius: 8px;
       padding: 10px;
+      margin-right: 7px;
     }
 
     .OpenServer {
@@ -169,24 +170,56 @@
       background-color: gray;
       color: black;
     }
+
+    #CreateServerButton {
+      height: 24px;
+      width: 65px;
+      border-radius: 8px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 1px;
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
+      margin-left: 7px;
+    }
+
+    #CreateServerButton:focus {
+      outline-color: blue;
+      outline-style: solid;
+      outline-width: 1px;
+    }
+
+    #CreateServerButton:hover {
+      background-color: white;
+      color: black;
+      outline-color: black;
+    }
+
+    #CreateServerButton:active {
+      background-color: gray;
+      color: black;
+    }
   </style>
 </head>
 <body>
   <div class="CenterVert">
-    <span id="ServerName">Server</span>
-    <div id="ServerList" style="display: none; margin-left: 10px;">
-      <div class="ServerListServer" id="32d58460-8333-4efe-9f5a-064c273757b6">
-        <span>Test Server</span>
-        <button class="OpenServer" data-server-id="32d58460-8333-4efe-9f5a-064c273757b6">Open</button>
-      </div>
-    </div>
-    <button id="OpenServersButton">></button>
+    <span id="ServerName">Server select</span>
   </div>
   <div class="Line"></div>
   <br>
-  <div id="Messages"></div>
-  <input id="MessageInput">
-  <button id="SendButton">></button>
-  <script src="./main.js"></script>
+  <div id="ServerList">
+    <div class="ServerListServer" id="32d58460-8333-4efe-9f5a-064c273757b6">
+      <span>Test Server</span><!--
+   --><button class="OpenServer" data-server-id="32d58460-8333-4efe-9f5a-064c273757b6">Open</button>
+    </div>
+    <br>
+    <div id="CreateServer">
+      <span>Create Server</span><!--
+   --><button class="OpenServer" id="CreateServerButton">Create</button>
+    </div>
+  </div>
+  <script src="./server-select-main.js"></script>
 </body>
 </html>
