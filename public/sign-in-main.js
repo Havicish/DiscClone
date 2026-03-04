@@ -15,7 +15,7 @@ createAccountButton.addEventListener("click", () => {
   .then(response => response.json())
   .then(data => {
     if (data.success) {
-      document.localStorage.setItem("loginToken", data.loginToken);
+      localStorage.setItem("loginToken", data.loginToken);
       alert("Account created successfully!");
       window.location.href = "/";
     } else {

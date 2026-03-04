@@ -56,7 +56,8 @@
     .Time {
       font-size: 50%;
       font-weight: bold;
-      color: #888;
+      color: #000;
+      transition: color 0.3s;
     }
 
     #Messages {
@@ -65,6 +66,21 @@
       border: solid white 1px;
       border: none;
       padding: 0px;
+    }
+
+    .Message:hover .Time {
+      color: #888;
+      transition: color 0.3s;
+    }
+
+    .Message:hover {
+      background-color: #111;
+      transition: background-color 0.3s;
+    }
+
+    .Message {
+      background-color: #000;
+      transition: background-color 0.3s;
     }
 
     #SendButton {
@@ -86,7 +102,7 @@
 
     #OpenServersButton {
       height: 34px;
-      width: 34px;
+      /*width: 34px;*/
       border-radius: 800px;
       border: none;
       outline-style: none;
@@ -137,6 +153,7 @@
       border: solid white 1px;
       border-radius: 8px;
       padding: 10px;
+      display: inline;
     }
 
     .OpenServer {
@@ -169,10 +186,18 @@
       background-color: gray;
       color: black;
     }
+
+    .ServerListServer {
+      display: inline;
+    }
   </style>
 </head>
 <body>
   <div class="CenterVert">
+    <a href="../">
+      <img src="HomeIcon.png" alt="Home" style="width: 50px; height: 50px;">
+    </a>
+    <span>&nbsp;&nbsp;</span>
     <span id="ServerName">Server</span>
     <div id="ServerList" style="display: none; margin-left: 10px;">
       <div class="ServerListServer" id="32d58460-8333-4efe-9f5a-064c273757b6">
@@ -180,12 +205,12 @@
         <button class="OpenServer" data-server-id="32d58460-8333-4efe-9f5a-064c273757b6">Open</button>
       </div>
     </div>
-    <button id="OpenServersButton">></button>
+    <button id="OpenServersButton">&nbsp;Servers >&nbsp;</button>
   </div>
   <div class="Line"></div>
   <br>
   <div id="Messages"></div>
-  <input id="MessageInput">
+  <textarea id="MessageInput" placeholder="Type a message..." spellcheck="true"></textarea>
   <button id="SendButton">></button>
   <script src="./main.js"></script>
 </body>

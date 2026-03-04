@@ -9,6 +9,8 @@ let currentUsername = null;
 let currentLoginToken = null;
 let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
 
+let isShiftDown = false;
+
 const messages = [];
 
 class Message {
@@ -18,7 +20,7 @@ class Message {
     this.timeCreated = timeCreated;
   }
 
-  render(messagesDiv) {
+  render(messagesDiv, isHeader = false, isTrailing = false) {
     const date = new Date(this.timeCreated);
     const timeString = date.toLocaleString();
 
@@ -37,9 +39,19 @@ class Message {
     timeElement.className = "Time";
     timeElement.innerText = `(${timeString})`;
 
-    messageDiv.appendChild(usernameElement);
+    if (isHeader) {
+      messageDiv.appendChild(usernameElement);
+      messageDiv.appendChild(document.createElement("br"));
+    }
     messageDiv.appendChild(textElement);
     messageDiv.appendChild(timeElement);
+    if (isTrailing) {
+      messageDiv.appendChild(document.createElement("br"));
+      messageDiv.appendChild(document.createElement("br"));
+    }
+    if (!isTrailing) {
+      messageDiv.style.marginBottom = "10px";
+    }
     messagesDiv.appendChild(messageDiv);
   }
 }
@@ -63,26 +75,25 @@ function createMessage(username, message, timeCreated) {
 }
 
 function renderAllMessages(messagesDiv) {
+  messageClumps = [[]];
+  let currentClump = messages[0].username;
+
   for (const message of messages) {
-    message.render(messagesDiv);
+    if (message.username != currentClump) {
+      messageClumps.push([]);
+      currentClump = message.username;
+    }
+    messageClumps[messageClumps.length - 1].push(message);
+  }
+
+  for (const clump of messageClumps) {
+    for (const message of clump) {
+      message.render(messagesDiv, clump[0] === message, clump[clump.length - 1] === message);
+    }
   }
 }
 
 function getNewMessages(timeAfter, serverId) {
-  // fetch(backendURL + "/getMessages" + "?after=" + timeAfter + "?server")
-  //   .then((response) => response.json())
-  //   .then((data) => {
-  //     if (data.length > 0) {
-  //       clearAllMessages();
-  //       data.forEach((msg) => {
-  //         createMessage(msg.username, msg.message, msg.timeCreated);
-  //       });
-  //       const messagesDiv = document.getElementById("Messages");
-  //       clearAllRenderedMessages(messagesDiv);
-  //       renderAllMessages(messagesDiv);
-  //     }
-  //   });
-
   fetch(backendURL + "/getMessages", {
     method: "POST",
     headers: {
@@ -162,8 +173,12 @@ function updateServerList(loginToken, callback) {
           window.location.href = "/server/" + server.id;
         });
 
+        const paddingSpan = document.createElement("span");
+        paddingSpan.innerHTML = "&nbsp;&nbsp;";
+
         serverDiv.appendChild(nameSpan);
         serverDiv.appendChild(openButton);
+        serverDiv.appendChild(paddingSpan);
         serverListDiv.appendChild(serverDiv);
       });
       callback();
@@ -171,14 +186,24 @@ function updateServerList(loginToken, callback) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.key == "Enter")
+  if (event.key == "Enter" && document.activeElement.id == "MessageInput" && document.getElementById("MessageInput").value.trim() != "" && !isShiftDown) {
     document.getElementById("SendButton").click();
+    event.preventDefault();
+  }
+
+  if (event.key == "Shift")
+    isShiftDown = true;
+});
+
+document.addEventListener("keyup", (event) => {
+  if (event.key == "Shift")
+    isShiftDown = false;
 });
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginToken = localStorage.getItem("loginToken");
   if (!loginToken) {
-    window.location.href = "/sign-in.html";
+    window.location.href = "/sign-in";
     return;
   }
 
@@ -192,14 +217,14 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   document.getElementById("OpenServersButton").addEventListener("click", (e) => {
-    if (document.getElementById("OpenServersButton").innerText === ">") {
-      document.getElementById("OpenServersButton").innerText = "...";
+    if (document.getElementById("OpenServersButton").innerHTML === "&nbsp;Servers &gt;&nbsp;") {
+      document.getElementById("OpenServersButton").innerHTML = "...";
       updateServerList(currentLoginToken, () => {
-        document.getElementById("OpenServersButton").innerText = "<";
+        document.getElementById("OpenServersButton").innerHTML = "&nbsp;&lt;&nbsp;";
         document.getElementById("ServerList").style.display = "block";
       });
     } else {
-      document.getElementById("OpenServersButton").innerText = ">";
+      document.getElementById("OpenServersButton").innerHTML = "&nbsp;Servers &gt;&nbsp;";
       document.getElementById("ServerList").style.display = "none";
     }
   });
@@ -219,7 +244,7 @@ document.addEventListener("DOMContentLoaded", () => {
         getServerName(currentLoginToken, currentServerId);
       } else {
         localStorage.removeItem("loginToken");
-        window.location.href = "/sign-in.html";
+        window.location.href = "/sign-in";
       }
     });
 });

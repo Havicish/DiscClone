@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Server</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
+    }
+
+    .Line {
+      width: calc(100% - 6px);
+      height: 2px;
+      background-color: #808080;
+      display: block;
+    }
+
+    input {
+      border-radius: 4px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 2px;
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
+    }
+
+    input:focus {
+      outline-color: blue;
+      outline-style: solid;
+      outline-width: 2px;
+    }
+
+    button {
+      border-radius: 4px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 2px;
+      background-color: black;
+      color: white;
+      font-family: 'Nunito';
+    }
+
+    button:focus {
+      outline-color: blue;
+      outline-style: solid;
+      outline-width: 2px;
+    }
+
+    button:hover {
+      background-color: white;
+      color: black;
+    }
+
+    button:active {
+      background-color: gray;
+      color: black;
+    }
+
+    .CenterVert {
+      display: flex;
+      align-items: center;
+    }
+
+    input[type="color"] {
+      width: 40px;
+      height: 21px;
+      transform: translate(0, 1px);
+    }
+  </style>
+</head>
+<body>
+  <div id="Create" style="display: none;">
+    <div class="CenterVert">
+      <a href="../">
+        <img src="../../HomeIcon.png" alt="Home" style="width: 50px; height: 50px;">
+      </a>
+      <span>&nbsp;&nbsp;</span>
+      <h1>Create server</h1>
+    </div>
+    <div class="Line"></div>
+    <br>
+    <label for="ServerNameInput">Server name:</label>
+    <input id="ServerNameInput">
+    <br>
+    <br>
+    <!-- <span>‎‎</span> -->
+    <button id="CancelServerButton">Cancel</button>
+    <button id="CreateServerButton">Create server</button>
+  </div>
+  <div id="Edit" style="display: none;">
+    <div class="CenterVert">
+      <a href="../">
+        <img src="../../HomeIcon.png" alt="Home" style="width: 50px; height: 50px;">
+      </a>
+      <span>&nbsp;&nbsp;</span>
+      <h1>Edit server</h1>
+    </div>
+    <div class="Line"></div>
+    <br>
+    <label for="EditServerNameInput">Rename server:</label>
+    <input id="EditServerNameInput">
+    <br>
+    <br>
+    <label for="EditServerWhitelistInput">Whitelist edit:</label>
+    <input id="EditServerWhitelistInput">
+    <span>&nbsp;</span>
+    <button id="AddUserButton">Add</button>
+    <span>&nbsp;</span>
+    <button id="RemoveUserButton">Remove</button>
+    <!--<br>
+    <br>
+    <label for="UserColorName">User color:</label>
+    <input id="UserColorName" type="text" placeholder="Username">
+    <input id="UserColorColor" type="color" value="#ffffff">
+    <span>&nbsp;</span>
+    <button id="SetUserColorButton">Set color</button>-->
+    <br>
+    <br>
+    <!-- <span>‎‎</span> -->
+     <button id="CancelChangesButton">Cancel changes</button>
+    <button id="SaveChangesButton">Save changes</button>
+  </div>
+  <script src="./get/edit-server-main.js"></script>
+</body>
+</html>

@@ -42,6 +42,17 @@ function updateServerList(loginToken, callback) {
         serverDiv.appendChild(openButton);
         serverListDiv.appendChild(serverDiv);
 
+        if (server.owner == currentUsername) {
+          const editButton = document.createElement("button");
+          editButton.className = "EditServer";
+          editButton.dataset.serverId = server.id;
+          editButton.innerText = "Edit";
+          editButton.addEventListener("click", () => {
+            window.location.href = "/edit-server/" + server.id;
+          });
+          serverDiv.appendChild(editButton);
+        }
+
         const breakline = document.createElement("br");
         serverListDiv.appendChild(breakline);
       });
@@ -53,11 +64,15 @@ function updateServerList(loginToken, callback) {
 document.addEventListener("DOMContentLoaded", () => {
   const loginToken = localStorage.getItem("loginToken");
   if (!loginToken) {
-    window.location.href = "/sign-in.html";
+    window.location.href = "/sign-in";
     return;
   }
 
   currentLoginToken = loginToken;
+
+  document.getElementById("CreateServerButton").addEventListener("click", (e) => {
+    window.location.href = "/edit-server/new";
+  });
 
   // check if token is valid, and sign in
   fetch(backendURL + "/getAccountInfo", {
@@ -70,23 +85,14 @@ document.addEventListener("DOMContentLoaded", () => {
     .then((data) => {
       if (data.success) {
         currentUsername = data.username;
-        updateServerList(currentLoginToken, () => {
-          if (currentServerId) {
-            getNewMessages(0, currentServerId);
-            getServerName(currentLoginToken, currentServerId);
-          }
-        });
+        updateServerList(currentLoginToken, () => {});
       } else {
         localStorage.removeItem("loginToken");
-        window.location.href = "/sign-in.html";
+        window.location.href = "/sign-in";
       }
     });
 });
 
 setInterval(() => {
-  updateServerList(currentLoginToken, () => {
-    if (currentServerId) {
-      getNewMessages(0, currentServerId);
-    }
-  });
+  updateServerList(currentLoginToken, () => {});
 }, 2000);

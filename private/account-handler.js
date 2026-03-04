@@ -5,6 +5,11 @@ const { addAPIListener } = require("./server");
 
 const accountsFilePath = path.join(__dirname, "accounts.json");
 
+process.on("SIGINT", () => {
+  saveAccounts();
+  process.exit(0);
+});
+
 class Account {
   constructor(username, password) {
     this.username = username;
@@ -195,4 +200,6 @@ addAPIListener("/getAccountInfo", (req, res) => {
 
 module.exports = {
   findAccountByLoginToken,
+  findAccountByUsername,
+  saveAccounts
 };

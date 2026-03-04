@@ -46,6 +46,16 @@ const server = http.createServer((req, res) => {
     if (req.url === "/") {
       filePath = path.join(__dirname, '../public', 'server-select.html');
     }
+    if (req.url.split("/")[1] === "edit-server") {
+      if (req.url.split("/")[2] !== "get") {
+        filePath = path.join(__dirname, '../public', 'edit-server.html');
+      } else {
+        filePath = path.join(__dirname, '../public', `${req.url.split("/")[3]}`);
+      }
+    }
+    if (req.url === "/sign-in") {
+      filePath = path.join(__dirname, '../public', 'sign-in.html');
+    }
     fs.readFile(filePath, (err, data) => {
       if (err) {
         res.writeHead(404, { 'Content-Type': 'text/plain' });
