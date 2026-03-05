@@ -9,6 +9,8 @@ let currentUsername = null;
 let currentLoginToken = null;
 let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
 
+let lastServerNames = [];
+
 function updateServerList(loginToken, callback) {
   fetch(backendURL + "/getServers", {
     method: "POST",
@@ -18,12 +20,28 @@ function updateServerList(loginToken, callback) {
     body: JSON.stringify({ loginToken }),
   }).then((response) => response.json())
     .then((data) => {
+      let shouldResetServerList = false;
+
+      data.forEach((server) => {
+        if (!lastServerNames.includes(server.name)) {
+          shouldResetServerList = true;
+        }
+      });
+
+      if (!shouldResetServerList && lastServerNames.length > 0)
+        return;
+
+      lastServerNames = [];
+
       const serverListDiv = document.getElementById("ServerList");
       const createServerDiv = document.getElementById("CreateServer");
+      createServerDiv.style.display = "block";
       Array.from(serverListDiv.children).forEach((child) => {
         child.remove();
       });
       data.forEach((server) => {
+        lastServerNames.push(server.name);
+
         const serverDiv = document.createElement("div");
         serverDiv.className = "ServerListServer";
 

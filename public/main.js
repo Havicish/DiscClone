@@ -14,10 +14,11 @@ let isShiftDown = false;
 const messages = [];
 
 class Message {
-  constructor(username, message, timeCreated) {
+  constructor(username, message, timeCreated, id) {
     this.username = username;
     this.message = message;
     this.timeCreated = timeCreated;
+    this.id = id;
   }
 
   render(messagesDiv, isHeader = false, isTrailing = false) {
@@ -26,6 +27,7 @@ class Message {
 
     const messageDiv = document.createElement("div");
     messageDiv.className = "Message";
+    messageDiv.dataset.id = this.id;
 
     const usernameElement = document.createElement("b");
     usernameElement.className = "Username";
@@ -69,8 +71,8 @@ function clearAllRenderedMessages(messagesDiv) {
   });
 }
 
-function createMessage(username, message, timeCreated) {
-  const newMessage = new Message(username, message, timeCreated);
+function createMessage(username, message, timeCreated, id) {
+  const newMessage = new Message(username, message, timeCreated, id);
   messages.push(newMessage);
 }
 
@@ -93,6 +95,21 @@ function renderAllMessages(messagesDiv) {
   }
 }
 
+function isThereUnrenderedMessages(messagesDiv) {
+  const renderedMessages = [];
+  Array.from(messagesDiv.children).forEach((child) => {
+    const id = child.dataset.id;
+    if (id)
+      renderedMessages.push(id);
+  });
+
+  for (const message of messages) {
+    if (!renderedMessages.includes(message.id))
+      return true;
+  }
+  return false;
+}
+
 function getNewMessages(timeAfter, serverId) {
   fetch(backendURL + "/getMessages", {
     method: "POST",
@@ -105,11 +122,13 @@ function getNewMessages(timeAfter, serverId) {
       if (data.length > 0) {
         clearAllMessages();
         data.forEach((msg) => {
-          createMessage(msg.username, msg.message, msg.timeCreated);
+          createMessage(msg.username, msg.message, msg.timeCreated, msg.id);
         });
         const messagesDiv = document.getElementById("Messages");
-        clearAllRenderedMessages(messagesDiv);
-        renderAllMessages(messagesDiv);
+        if (isThereUnrenderedMessages(messagesDiv)) {
+          clearAllRenderedMessages(messagesDiv);
+          renderAllMessages(messagesDiv);
+        }
       }
     });
 }

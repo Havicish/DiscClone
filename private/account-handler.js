@@ -45,6 +45,8 @@ class Account {
 
     if (password == this.password) {
       this.failedLogins = 0;
+      this.locked = false;
+      this.lockedUntil = null;
       return true;
     }
 
@@ -56,6 +58,16 @@ class Account {
     }
 
     return false;
+  }
+
+  isLocked() {
+    if (this.lockedUntil && Date.now() < this.lockedUntil)
+      return true;
+    else {
+      this.failedLogins = 0;
+      this.locked = false;
+      this.lockedUntil = null;
+    }
   }
 }
 
@@ -165,7 +177,12 @@ addAPIListener("/login", (req, res) => {
 
     if (!account.attemptLogin(password)) {
       saveAccounts();
-      return sendJson(res, { success: false, message: "Invalid username or password" });
+      if (!account.isLocked())
+        return sendJson(res, { success: false, message: "Invalid username or password" });
+      else {
+        const dateObj = new Date(account.lockedUntil);
+        return sendJson(res, { success: false, message: `Account locked until: ${dateObj.toLocaleString()}` });
+      }
     }
 
     const token = account.getLoginToken();

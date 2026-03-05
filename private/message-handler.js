@@ -15,6 +15,7 @@ class Message {
     this.username = username;
     this.message = message;
     this.timeCreated = Date.now();
+    this.id = crypto.randomUUID();
   }
 }
 

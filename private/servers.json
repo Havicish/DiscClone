@@ -1,240 +1,30 @@
 {
-  "32d58460-8333-4efe-9f5a-064c273757b6": {
-    "name": "Test Server",
+  "83a2a963-7dea-44c9-8ec1-9815d1a51180": {
+    "name": "Friends",
     "messages": [
       {
         "username": "Havicish",
-        "message": "test",
-        "timeCreated": 1771556399797
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235054772
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235082452
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235082921
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083138
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083333
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083405
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083490
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083566
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083657
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083723
-      },
-      {
-        "username": "Havicish",
-        "message": "",
-        "timeCreated": 1772235083810
-      },
-      {
-        "username": "Havicish",
-        "message": "boom",
-        "timeCreated": 1772578054782
+        "message": "wa",
+        "timeCreated": 1772666260765,
+        "id": "926db208-ade0-48a8-ab20-2b6842f60f8b"
       },
       {
         "username": "Havicish",
         "message": "e",
-        "timeCreated": 1772578275851
+        "timeCreated": 1772666990509,
+        "id": "4b69cc5c-0a04-458b-bc63-1163282c3fb9"
       },
       {
         "username": "Havicish",
-        "message": "\\n",
-        "timeCreated": 1772578296928
-      }
-    ],
-    "owner": "Havicish",
-    "whitelist": [
-      "Havicish"
-    ]
-  },
-  "59468386-b83b-4367-876a-69e4efe149ed": {
-    "name": "Test Server 2",
-    "messages": [
-      {
-        "username": "Havicish",
-        "message": "test, hehe",
-        "timeCreated": 1772234265188
-      }
-    ],
-    "owner": "Havicish",
-    "whitelist": [
-      "Havicish"
-    ]
-  },
-  "cb20de4c-1381-4144-a1f7-0c88137a7535": {
-    "name": "Test Server 3",
-    "messages": [
-      {
-        "username": "TestAcc0",
-        "message": "hello",
-        "timeCreated": 1772585287681
-      },
-      {
-        "username": "Havicish",
-        "message": "iweufhwu",
-        "timeCreated": 1772585395073
-      },
-      {
-        "username": "Havicish",
-        "message": "wefioj",
-        "timeCreated": 1772585451330
-      }
-    ],
-    "owner": "TestAcc0",
-    "whitelist": [
-      "TestAcc0",
-      "Havicish"
-    ]
-  },
-  "fed2782f-7140-4ef9-98c1-5308ace2ed06": {
-    "name": "Test with friends",
-    "messages": [
-      {
-        "username": "Mryes123457",
-        "message": "Hi",
-        "timeCreated": 1772586521110
-      },
-      {
-        "username": "Havicish",
-        "message": ":3",
-        "timeCreated": 1772586521586
-      },
-      {
-        "username": "Havicish",
-        "message": "YAY",
-        "timeCreated": 1772586523743
-      },
-      {
-        "username": "Mryes123457",
-        "message": "It works!!!!!!",
-        "timeCreated": 1772586528121
-      },
-      {
-        "username": "Mryes123457",
-        "message": "Wahoo",
-        "timeCreated": 1772586558110
-      },
-      {
-        "username": "Havicish",
-        "message": "weifjiwuefhiuwhfiuwhef",
-        "timeCreated": 1772586564108
-      },
-      {
-        "username": "Havicish",
-        "message": "dhaofhe ",
-        "timeCreated": 1772586729917
-      },
-      {
-        "username": "Mryes123457",
-        "message": "kl",
-        "timeCreated": 1772586852826
-      },
-      {
-        "username": "Havicish",
-        "message": "kys (keep urself safe)",
-        "timeCreated": 1772586864736
-      },
-      {
-        "username": "Havicish",
-        "message": "sus",
-        "timeCreated": 1772586873513
-      },
-      {
-        "username": "Mryes123457",
-        "message": "among us",
-        "timeCreated": 1772586881963
-      },
-      {
-        "username": "Havicish",
-        "message": "WHEN THE IMPOSTER IS SUS",
-        "timeCreated": 1772586883634
-      },
-      {
-        "username": "Havicish",
-        "message": "x3",
-        "timeCreated": 1772586886877
-      },
-      {
-        "username": "Mryes123457",
-        "message": "PEAK (The Game)",
-        "timeCreated": 1772586898057
-      },
-      {
-        "username": "Havicish",
-        "message": ":3c",
-        "timeCreated": 1772587480128
-      },
-      {
-        "username": "Havicish",
-        "message": "🐸",
-        "timeCreated": 1772587489225
-      },
-      {
-        "username": "Havicish",
-        "message": "test",
-        "timeCreated": 1772590238072
-      },
-      {
-        "username": "Havicish",
-        "message": "Test",
-        "timeCreated": 1772590447667
-      },
-      {
-        "username": "Havicish",
-        "message": "wefwe\nwoeifjwoie",
-        "timeCreated": 1772590834656
-      },
-      {
-        "username": "Havicish",
-        "message": "wefoijew",
-        "timeCreated": 1772590854667
-      },
-      {
-        "username": "Havicish",
-        "message": "woiefjwoiej\noweifjwoiejf",
-        "timeCreated": 1772590864068
+        "message": "e",
+        "timeCreated": 1772666993155,
+        "id": "e81b6e6b-1e51-44b6-b4f0-51d1d0a7a7f2"
       }
     ],
     "whitelist": [
-      "Mryes123457",
-      "Havicish"
+      "Havicish",
+      "Mryes123457"
     ],
-    "owner": "Mryes123457"
+    "owner": "Havicish"
   }
 }
