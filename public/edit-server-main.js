@@ -1,7 +1,29 @@
+let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
+backendURL = location.origin;
+
 window.addEventListener("error", (event) => {
   console.error("Error occurred:", event.error);
   alert("An error occurred: " + event.error.message);
 });
+
+function getServerName(loginToken, serverId) {
+  fetch(backendURL + "/getServerName", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ loginToken, serverId }),
+  }).then((response) => response.json())
+    .then((data) => {
+      if (typeof data == "string") {
+        document.getElementById("ServerName").innerText = "Edit the " + data + " server";
+        document.title = "Edit " + data + " - Symphony";
+      } else {
+        document.getElementById("ServerName").innerText = "Access denied";
+        document.title = "Access denied - Symphony";
+      }
+    });
+}
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginToken = localStorage.getItem("loginToken");
@@ -52,6 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
   } else {
     document.getElementById("Create").style.display = "none";
     document.getElementById("Edit").style.display = "block";
+
+    getServerName(loginToken, window.location.pathname.split("/").pop());
 
     document.getElementById("SaveChangesButton").addEventListener("click", () => {
       fetch("/editServer", {

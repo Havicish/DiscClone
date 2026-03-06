@@ -157,10 +157,13 @@ function getServerName(loginToken, serverId) {
     body: JSON.stringify({ loginToken, serverId }),
   }).then((response) => response.json())
     .then((data) => {
-      if (typeof data == "string")
+      if (typeof data == "string") {
         document.getElementById("ServerName").innerText = data;
-      else
+        document.title = data + " - Symphony";
+      } else {
         document.getElementById("ServerName").innerText = "Access denied";
+        document.title = "Access denied - Symphony";
+      }
     });
 }
 

@@ -275,15 +275,15 @@ addAPIListener("/removeServerWhitelist", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
     }
-    if (!server.whitelist.includes(data.username)) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", message: "Not in whitelist to begin with :middle_finger:", success: false }));  
-      return;
-    }
     const accountToRemove = findAccountByUsername(data.username);
     if (!accountToRemove) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "User not found" }));
+      return;
+    }
+    if (!server.whitelist.includes(data.username)) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok", message: "Not in whitelist to begin with :middle_finger:", success: false }));  
       return;
     }
     server.whitelist.splice(server.whitelist.indexOf(data.username));

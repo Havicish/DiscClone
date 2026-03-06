@@ -62,6 +62,32 @@ addAPIListener("/getMessages", (req, res) => {
   });
 });
 
+addAPIListener("/deleteMessage", (req, res) => {
+  let body = "";
+  req.on("data", (chunk) => {
+    body += chunk.toString();
+  });
+  req.on("end", () => {
+    const data = JSON.parse(body);
+    const after = parseInt(data.after) || 0;
+    const serverId = data.serverId;
+    const server = servers[serverId];
+    if (!server) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    if (!server.whitelist.includes(findOrAddAccount(data.loginToken).username)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    const newMessages = server.messages.filter((msg) => msg.timeCreated > after);
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify(newMessages));
+  });
+});
+
 function createMessage(username, message) {
   let msg = new Message(username, message);
   messages.push(msg);

@@ -27,6 +27,8 @@ function getContentType(filePath) {
       return 'application/json';
     case '.png':
       return 'image/png';
+    case '.ico':
+      return 'image/x-icon';
     case "":
       return 'text/plain';
   }
