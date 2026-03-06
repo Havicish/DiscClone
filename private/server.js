@@ -70,12 +70,25 @@ const server = http.createServer((req, res) => {
   }
 });
 
+const globalServersJSONPath = path.join(__dirname, '../data', 'servers.json');
+const globalAccountsJSONPath = path.join(__dirname, '../data', 'accounts.json');
+
+if (!fs.existsSync(globalServersJSONPath)) {
+  fs.writeFileSync(globalServersJSONPath, JSON.stringify({}, null, 2));
+}
+
+if (!fs.existsSync(globalAccountsJSONPath)) {
+  fs.writeFileSync(globalAccountsJSONPath, JSON.stringify({}, null, 2));
+}
+
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
 });
 
 module.exports = {
-  addAPIListener
+  addAPIListener,
+  globalAccountsJSONPath,
+  globalServersJSONPath
 };
 
 setImmediate(() => {

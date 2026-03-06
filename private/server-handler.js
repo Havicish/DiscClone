@@ -4,6 +4,8 @@ const { addAPIListener } = require("./server");
 const findAccountByLoginToken = require("./account-handler").findAccountByLoginToken;
 const findAccountByUsername = require("./account-handler").findAccountByUsername;
 const saveAccounts = require("./account-handler").saveAccounts;
+const globalAccountsJSONPath = require("./server").globalAccountsJSONPath;
+const globalServersJSONPath = require("./server").globalServersJSONPath;
 
 class Server {
   constructor() {
@@ -15,21 +17,19 @@ class Server {
   }
 
   loadMessages() {
-    const serversFilePath = path.join(__dirname, "servers.json");
-    if (!fs.existsSync(serversFilePath))
+    if (!fs.existsSync(globalServersJSONPath))
       return;
 
-    const serversData = JSON.parse(fs.readFileSync(serversFilePath));
+    const serversData = JSON.parse(fs.readFileSync(globalServersJSONPath));
     const serverData = serversData[this.id];
     if (serverData)
       this.messages = serverData.messages || [];
   }
 
   saveMessages() {
-    const serversFilePath = path.join(__dirname, "servers.json");
     let serversData = {};
-    if (fs.existsSync(serversFilePath)) {
-      serversData = JSON.parse(fs.readFileSync(serversFilePath));
+    if (fs.existsSync(globalServersJSONPath)) {
+      serversData = JSON.parse(fs.readFileSync(globalServersJSONPath));
     }
 
     serversData[this.id] = {
@@ -39,7 +39,7 @@ class Server {
       owner: this.owner,
     };
 
-    fs.writeFileSync(serversFilePath, JSON.stringify(serversData, null, 2));
+    fs.writeFileSync(globalServersJSONPath, JSON.stringify(serversData, null, 2));
   }
 }
 
@@ -50,11 +50,10 @@ function addMessageToServer(id, message) {
 }
 
 function loadServers() {
-  const serversFilePath = path.join(__dirname, "servers.json");
-  if (!fs.existsSync(serversFilePath))
+  if (!fs.existsSync(globalServersJSONPath))
     return;
 
-  const serversData = JSON.parse(fs.readFileSync(serversFilePath));
+  const serversData = JSON.parse(fs.readFileSync(globalServersJSONPath));
   for (const id in serversData) {
     const serverInfo = serversData[id];
     const server = new Server();
@@ -68,7 +67,6 @@ function loadServers() {
 }
 
 function saveServers() {
-  const serversFilePath = path.join(__dirname, "servers.json");
   let serversData = {};
   for (const id in servers) {
     const server = servers[id];
@@ -79,7 +77,7 @@ function saveServers() {
       whitelist: server.whitelist,
     };
   }
-  fs.writeFileSync(serversFilePath, JSON.stringify(serversData, null, 2));
+  fs.writeFileSync(globalServersJSONPath, JSON.stringify(serversData, null, 2));
 }
 
 const validatedUsernames = {};

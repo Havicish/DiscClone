@@ -1,0 +1,14 @@
+{
+  "Havicish": {
+    "username": "Havicish",
+    "password": "wef",
+    "currentLoginToken": "fe876fc5-d3d8-413c-af89-ed97afac7235",
+    "loginTokenExpirationDate": 1773991425078,
+    "failedLogins": 0,
+    "maxFailedLoginAttempts": 5,
+    "lockedUntil": null,
+    "servers": [
+      "c84c29c8-640d-4ad5-8af7-a7dd0698c156"
+    ]
+  }
+}

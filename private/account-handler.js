@@ -2,8 +2,10 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { addAPIListener } = require("./server");
+const globalAccountsJSONPath = require("./server").globalAccountsJSONPath;
+const globalServersJSONPath = require("./server").globalServersJSONPath;
 
-const accountsFilePath = path.join(__dirname, "accounts.json");
+const accountsFilePath = globalAccountsJSONPath;
 
 process.on("SIGINT", () => {
   saveAccounts();

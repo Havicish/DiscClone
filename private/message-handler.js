@@ -7,6 +7,8 @@ const loadServers = require("./server-handler").loadServers;
 const saveServers = require("./server-handler").saveServers;
 const addMessageToServer = require("./server-handler").addMessageToServer;
 const servers = require("./server-handler").servers;
+const globalAccountsJSONPath = require("./server").globalAccountsJSONPath;
+const globalServersJSONPath = require("./server").globalServersJSONPath;
 
 loadServers();
 

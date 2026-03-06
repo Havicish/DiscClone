@@ -1,0 +1,17 @@
+{
+  "c84c29c8-640d-4ad5-8af7-a7dd0698c156": {
+    "name": "test",
+    "messages": [
+      {
+        "username": "Havicish",
+        "message": "test456",
+        "timeCreated": 1772784074157,
+        "id": "3de99f20-4d31-46c4-9346-70dd2ceaeb47"
+      }
+    ],
+    "whitelist": [
+      "Havicish"
+    ],
+    "owner": "Havicish"
+  }
+}
