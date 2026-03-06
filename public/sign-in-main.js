@@ -16,6 +16,7 @@ createAccountButton.addEventListener("click", () => {
   .then(data => {
     if (data.success) {
       localStorage.setItem("loginToken", data.loginToken);
+      localStorage.setItem("username", username);
       alert("Account created successfully!");
       window.location.href = "/";
     } else {
@@ -37,9 +38,10 @@ loginButton.addEventListener("click", () => {
   })
   .then(response => response.json())
   .then(data => {
-    if (data.success) {
+    if (data.status == "success") {
       alert("Login successful!");
       localStorage.setItem("loginToken", data.loginToken);
+      localStorage.setItem("username", username);
       window.location.href = "/";
     } else {
       alert("Error logging in: " + data.message);

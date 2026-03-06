@@ -5,8 +5,8 @@ window.addEventListener("error", (err) => {
 let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
 backendURL = location.origin;
 
-let currentUsername = null;
-let currentLoginToken = null;
+let currentUsername = localStorage.getItem("username");
+let currentLoginToken = localStorage.getItem("loginToken");
 let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
 
 let isShiftDown = false;
@@ -116,7 +116,7 @@ function getNewMessages(timeAfter, serverId) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken }),
+    body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }),
   }).then((response) => response.json())
     .then((data) => {
       if (data.length > 0) {
@@ -154,7 +154,7 @@ function getServerName(loginToken, serverId) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ loginToken, serverId }),
+    body: JSON.stringify({ loginToken, serverId, username: currentUsername }),
   }).then((response) => response.json())
     .then((data) => {
       if (typeof data == "string") {
@@ -173,7 +173,7 @@ function updateServerList(loginToken, callback) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ loginToken }),
+    body: JSON.stringify({ loginToken, username: currentUsername }),
   }).then((response) => response.json())
     .then((data) => {
       const serverListDiv = document.getElementById("ServerList");
@@ -257,10 +257,10 @@ document.addEventListener("DOMContentLoaded", () => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ loginToken }),
+    body: JSON.stringify({ loginToken, username: currentUsername }),
   }).then((response) => response.json())
     .then((data) => {
-      if (data.success) {
+      if (data.status == "success") {
         currentUsername = data.username;
         getNewMessages(0, currentServerId);
         getServerName(currentLoginToken, currentServerId);

@@ -1,11 +1,13 @@
 const fs = require("fs");
 const path = require("path");
 const { addAPIListener } = require("./server");
-const findAccountByLoginToken = require("./account-handler").findAccountByLoginToken;
 const findAccountByUsername = require("./account-handler").findAccountByUsername;
-const saveAccounts = require("./account-handler").saveAccounts;
-const globalAccountsJSONPath = require("./server").globalAccountsJSONPath;
 const globalServersJSONPath = require("./server").globalServersJSONPath;
+const globalServersDirPath = require("./server").globalServersDirPath;
+
+if (!fs.existsSync(globalServersDirPath)) {
+  fs.mkdirSync(path.join(globalServersDirPath, "servers"));
+}
 
 class Server {
   constructor() {
@@ -26,71 +28,49 @@ class Server {
       this.messages = serverData.messages || [];
   }
 
-  saveMessages() {
-    let serversData = {};
-    if (fs.existsSync(globalServersJSONPath)) {
-      serversData = JSON.parse(fs.readFileSync(globalServersJSONPath));
-    }
-
-    serversData[this.id] = {
+  save() {
+    const localPath = path.join(globalServersDirPath, `${this.id}.json`);
+    const data = {
       name: this.name,
+      id: this.id,
       messages: this.messages,
       whitelist: this.whitelist,
-      owner: this.owner,
+      owner: this.owner
     };
-
-    fs.writeFileSync(globalServersJSONPath, JSON.stringify(serversData, null, 2));
+    fs.writeFileSync(localPath, JSON.stringify(data, null, 2));
   }
 }
 
-let servers = {};
+function findServerById(id) {
+  const localPath = path.join(globalServersDirPath, `${id}.json`);
 
-function addMessageToServer(id, message) {
-  servers[id].messages.push(message);
-}
-
-function loadServers() {
-  if (!fs.existsSync(globalServersJSONPath))
-    return;
-
-  const serversData = JSON.parse(fs.readFileSync(globalServersJSONPath));
-  for (const id in serversData) {
-    const serverInfo = serversData[id];
-    const server = new Server();
-    server.id = id;
-    server.name = serverInfo.name;
-    server.messages = serverInfo.messages || [];
-    server.whitelist = serverInfo.whitelist || [];
-    server.owner = serverInfo.owner || null;
-    servers[id] = server;
-  }
-}
-
-function saveServers() {
-  let serversData = {};
-  for (const id in servers) {
-    const server = servers[id];
-    serversData[id] = {
-      name: server.name,
-      messages: server.messages,
-      owner: server.owner,
-      whitelist: server.whitelist,
-    };
-  }
-  fs.writeFileSync(globalServersJSONPath, JSON.stringify(serversData, null, 2));
-}
-
-const validatedUsernames = {};
-
-function findOrAddAccount(token) {
-  if (validatedUsernames[token])
-    return validatedUsernames[token];
-
-  const account = findAccountByLoginToken(token);
-  if (!account)
+  if (!fs.existsSync(localPath))
     return null;
 
-  validatedUsernames[token] = account;
+  const file = fs.readFileSync(localPath, "utf8");
+
+  const data = JSON.parse(file);
+  const server = new Server();
+  for (const key in data) {
+    server[key] = data[key];
+  }
+  return server;
+}
+
+function getAndValidateAccount(username, loginToken, res) {
+  const account = findAccountByUsername(username);
+  if (!account) {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "error", message: "Account not found" }));
+    return null;
+  }
+
+  if (!account.isLoginTokenValid(loginToken)) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "error", message: "Invalid token" }));
+    return null;
+  }
+
   return account;
 }
 
@@ -102,13 +82,16 @@ addAPIListener("/getServerName", (req, res) => {
   req.on("end", () => {
     const data = JSON.parse(body);
     const serverId = data.serverId;
-    const server = servers[serverId];
+    const server = findServerById(serverId);
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
+      return;
     if (!server) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
       return;
     }
-    if (!server.whitelist.includes(findOrAddAccount(data.loginToken).username)) {
+    if (!server.whitelist.includes(data.username)) {
       res.writeHead(403, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
@@ -126,18 +109,16 @@ addAPIListener("/getServers", (req, res) => {
   });
   req.on("end", () => {
     const data = JSON.parse(body);
-    const account = findOrAddAccount(data.loginToken);
-    if (!account) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
       return;
-    }
     const serverList = account.servers.map(serverId => {
-      const server = servers[serverId];
+      const server = findServerById(serverId);
       return { id: serverId, name: server ? server.name : "Unknown Server", owner: server ? server.owner : "Unknown" };
     });
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify(serverList));
+    return;
   });
 });
 
@@ -148,13 +129,9 @@ addAPIListener("/createServer", (req, res) => {
   });
   req.on("end", () => {
     const data = JSON.parse(body);
-    const account = findOrAddAccount(data.loginToken);
-    console.log("Creating server for account", account ? account.username : "null");
-    if (!account) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
       return;
-    }
     const serverName = data.name;
     const serverId = crypto.randomUUID();
     const newServer = new Server();
@@ -162,9 +139,9 @@ addAPIListener("/createServer", (req, res) => {
     newServer.name = serverName;
     newServer.owner = account.username;
     newServer.whitelist.push(account.username);
-    servers[serverId] = newServer;
+    fs.writeFileSync(path.join(globalServersDirPath, `${serverId}.json`), JSON.stringify(newServer, null, 2));
     account.servers.push(serverId);
-    saveServers();
+    account.save();
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", serverId, success: true }));
   });
@@ -177,14 +154,11 @@ addAPIListener("/editServer", (req, res) => {
   });
   req.on("end", () => {
     const data = JSON.parse(body);
-    const account = findOrAddAccount(data.loginToken);
-    if (!account) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
       return;
-    }
     const serverId = data.serverId;
-    const server = servers[serverId];
+    const server = findServerById(serverId);
     if (!server) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "Server not found" }));
@@ -196,9 +170,10 @@ addAPIListener("/editServer", (req, res) => {
       return;
     }
     server.name = data.name;
-    saveServers();
+    server.save();
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", serverId, success: true }));
+    return;
   });
 });
 
@@ -209,14 +184,11 @@ addAPIListener("/addServerWhitelist", (req, res) => {
   });
   req.on("end", () => {
     const data = JSON.parse(body);
-    const account = findOrAddAccount(data.loginToken);
-    if (!account) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
       return;
-    }
     const serverId = data.serverId;
-    const server = servers[serverId];
+    const server = findServerById(serverId);
     if (!server) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "Server not found" }));
@@ -227,22 +199,21 @@ addAPIListener("/addServerWhitelist", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
     }
-    if (server.whitelist.includes(data.username)) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", message: "Already whitelisted", success: false }));  
-      return;
-    }
-    const accountToAdd = findAccountByUsername(data.username);
-    console.log(accountToAdd);
+    const accountToAdd = findAccountByUsername(data.usernameToAdd);
     if (!accountToAdd) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "User not found" }));
       return;
     }
-    server.whitelist.push(data.username);
+    if (server.whitelist.includes(accountToAdd.username)) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok", message: "Already whitelisted", success: false }));  
+      return;
+    }
+    server.whitelist.push(accountToAdd.username);
     accountToAdd.servers.push(server.id);
-    saveServers();
-    saveAccounts();
+    server.save();
+    accountToAdd.save();
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", serverId, success: true }));
   });
@@ -255,14 +226,11 @@ addAPIListener("/removeServerWhitelist", (req, res) => {
   });
   req.on("end", () => {
     const data = JSON.parse(body);
-    const account = findOrAddAccount(data.loginToken);
-    if (!account) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
       return;
-    }
     const serverId = data.serverId;
-    const server = servers[serverId];
+    const server = findServerById(serverId);
     if (!server) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "Server not found" }));
@@ -273,21 +241,26 @@ addAPIListener("/removeServerWhitelist", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
     }
-    const accountToRemove = findAccountByUsername(data.username);
+    const accountToRemove = findAccountByUsername(data.usernameToRemove);
     if (!accountToRemove) {
       res.writeHead(404, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "User not found" }));
       return;
     }
-    if (!server.whitelist.includes(data.username)) {
+    if (accountToRemove.username == account.username) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "ok", message: "Nono, you can't remove yourself from the whitelist", success: false }));
+      return;
+    }
+    if (!server.whitelist.includes(accountToRemove.username)) {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "ok", message: "Not in whitelist to begin with :middle_finger:", success: false }));  
       return;
     }
-    server.whitelist.splice(server.whitelist.indexOf(data.username));
+    server.whitelist.splice(server.whitelist.indexOf(accountToRemove.username));
     accountToRemove.servers.splice(accountToRemove.servers.indexOf(server.id));
-    saveServers();
-    saveAccounts();
+    server.save();
+    accountToRemove.save();
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", serverId, success: true }));
   });
@@ -295,8 +268,5 @@ addAPIListener("/removeServerWhitelist", (req, res) => {
 
 module.exports = {
   Server,
-  servers,
-  addMessageToServer,
-  loadServers,
-  saveServers
+  findServerById
 };

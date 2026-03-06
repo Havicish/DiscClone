@@ -1,6 +1,8 @@
 let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
 backendURL = location.origin;
 
+let currentUsername = localStorage.getItem("username");
+
 window.addEventListener("error", (event) => {
   console.error("Error occurred:", event.error);
   alert("An error occurred: " + event.error.message);
@@ -12,7 +14,7 @@ function getServerName(loginToken, serverId) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ loginToken, serverId }),
+    body: JSON.stringify({ loginToken, username: currentUsername, serverId }),
   }).then((response) => response.json())
     .then((data) => {
       if (typeof data == "string") {
@@ -56,6 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
         body: JSON.stringify({
           name: serverName,
           loginToken: loginToken,
+          username: currentUsername
         }),
       })
         .then((res) => res.json())
@@ -87,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
           serverId: window.location.pathname.split("/").pop(),
           name: document.getElementById("EditServerNameInput").value,
           loginToken: loginToken,
+          username: currentUsername
         }),
       })
         .then((res) => res.json())
@@ -118,7 +122,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify({
           serverId: window.location.pathname.split("/").pop(),
-          username: usernameToAdd,
+          usernameToAdd: usernameToAdd,
+          username: currentUsername,
           loginToken
         }),
       })
@@ -152,7 +157,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
         body: JSON.stringify({
           serverId: window.location.pathname.split("/").pop(),
-          username: usernameToRemove,
+          usernameToRemove: usernameToRemove,
+          username: currentUsername,
           loginToken
         }),
       })

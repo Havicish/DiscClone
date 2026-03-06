@@ -2,15 +2,11 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { addAPIListener } = require("./server");
-const globalAccountsJSONPath = require("./server").globalAccountsJSONPath;
-const globalServersJSONPath = require("./server").globalServersJSONPath;
+const globalAccountsDirPath = require("./server").globalAccountsDirPath;
 
-const accountsFilePath = globalAccountsJSONPath;
-
-process.on("SIGINT", () => {
-  saveAccounts();
-  process.exit(0);
-});
+if (!fs.existsSync(globalAccountsDirPath)) {
+  fs.mkdirSync(path.join(globalAccountsDirPath, "accounts"));
+}
 
 class Account {
   constructor(username, password) {
@@ -71,64 +67,29 @@ class Account {
       this.lockedUntil = null;
     }
   }
-}
 
-let accounts = loadAccounts();
-
-function loadAccounts() {
-  if (!fs.existsSync(accountsFilePath))
-    return {};
-
-  const data = fs.readFileSync(accountsFilePath, "utf8");
-  let parsedAccounts = JSON.parse(data);
-
-  // Support older format where file could be an array
-  if (Array.isArray(parsedAccounts)) {
-    const obj = {};
-    for (const a of parsedAccounts) {
-      if (a && a.username) obj[a.username] = a;
-    }
-    parsedAccounts = obj;
+  isLoginTokenValid(token) {
+    return token == this.currentLoginToken;
   }
 
-  const result = {};
-  for (let username in parsedAccounts) {
-    const accData = parsedAccounts[username];
-    const newAccount = new Account(accData.username, accData.password);
-    for (let key in accData) {
-      if (key in newAccount)
-        newAccount[key] = accData[key];
-    }
-    result[newAccount.username] = newAccount;
+  save() {
+    fs.writeFileSync(path.join(globalAccountsDirPath, `${this.username}.json`), JSON.stringify(this, null, 2));
   }
-
-  return result;
-}
-
-function saveAccounts() {
-  fs.writeFileSync(
-    accountsFilePath,
-    JSON.stringify(accounts, null, 2)
-  );
 }
 
 function findAccountByUsername(username) {
-  return accounts[username] || null;
-}
+  const localPath = path.join(globalAccountsDirPath, `${username}.json`);
 
-function findAccountByLoginToken(token) {
-  for (const username in accounts) {
-    const account = accounts[username];
-    if (account.currentLoginToken === token)
-      return account;
+  if (!fs.existsSync(localPath))
+    return null;
+
+  const file = fs.readFileSync(localPath, "utf8");
+  const data = JSON.parse(file);
+  const account = new Account(data.username, data.password);
+  for (const key in data) {
+    account[key] = data[key];
   }
-
-  return null;
-}
-
-function sendJson(res, obj) {
-  res.writeHead(200, { "Content-Type": "application/json" });
-  res.end(JSON.stringify(obj));
+  return account;
 }
 
 addAPIListener("/createAccount", (req, res) => {
@@ -143,17 +104,24 @@ addAPIListener("/createAccount", (req, res) => {
     const username = data.username;
     const password = data.password;
 
-    if (!username || !password)
-      return sendJson(res, { success: false, message: "Missing fields" });
+    if (!username || !password) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Missing fields" }));
+      return;
+    }
 
-    if (findAccountByUsername(username))
-      return sendJson(res, { success: false, message: "Username already exists" });
+    if (findAccountByUsername(username)) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ success: false, message: "Username already taken" }));
+      return;
+    }
 
     const newAccount = new Account(username, password);
-    accounts[username] = newAccount;
-    saveAccounts();
+    newAccount.save();
 
-    return sendJson(res, { success: true, loginToken: newAccount.getLoginToken() });
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ success: true, loginToken: newAccount.getLoginToken() }));
+    return;
   });
 });
 
@@ -169,28 +137,40 @@ addAPIListener("/login", (req, res) => {
     const username = data.username;
     const password = data.password;
 
-    if (!username || !password)
-      return sendJson(res, { success: false, message: "Missing fields" });
+    if (!username || !password) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
 
     const account = findAccountByUsername(username);
 
-    if (!account)
-      return sendJson(res, { success: false, message: "Invalid username or password" });
+    if (!account) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid username or password" }));
+      return;
+    }
 
     if (!account.attemptLogin(password)) {
-      saveAccounts();
-      if (!account.isLocked())
-        return sendJson(res, { success: false, message: "Invalid username or password" });
-      else {
+      account.save();
+      if (!account.isLocked()) {
+        res.writeHead(401, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Invalid username or password" }));
+        return;
+      } else {
         const dateObj = new Date(account.lockedUntil);
-        return sendJson(res, { success: false, message: `Account locked until: ${dateObj.toLocaleString()}` });
+        res.writeHead(403, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: `Account locked until: ${dateObj.toLocaleString()}` }));
+        return;
       }
     }
 
     const token = account.getLoginToken();
-    saveAccounts();
+    account.save();
 
-    return sendJson(res, { success: true, loginToken: token });
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "success", loginToken: token }));
+    return;
   });
 });
 
@@ -203,22 +183,22 @@ addAPIListener("/getAccountInfo", (req, res) => {
 
   req.on("end", () => {
     const data = JSON.parse(body);
-    const token = data.loginToken;
+    const username = data.username;
 
-    if (!token)
-      return sendJson(res, { success: false, message: "Missing login token" });
+    const account = findAccountByUsername(username);
 
-    const account = findAccountByLoginToken(token);
+    if (!account) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Account not found" }));
+      return;
+    }
 
-    if (!account)
-      return sendJson(res, { success: false, message: "Invalid login token" });
-
-    return sendJson(res, { success: true, username: account.username });
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "success", username: account.username }));
+    return;
   });
 });
 
 module.exports = {
-  findAccountByLoginToken,
-  findAccountByUsername,
-  saveAccounts
+  findAccountByUsername
 };

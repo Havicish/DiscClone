@@ -5,19 +5,19 @@ window.addEventListener("error", (err) => {
 let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
 backendURL = location.origin;
 
-let currentUsername = null;
-let currentLoginToken = null;
+let currentUsername = localStorage.getItem("username");
+let currentLoginToken = localStorage.getItem("loginToken");
 let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
 
 let lastServerNames = [];
 
-function updateServerList(loginToken, callback) {
+function updateServerList() {
   fetch(backendURL + "/getServers", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ loginToken }),
+    body: JSON.stringify({ loginToken: currentLoginToken, username: currentUsername }),
   }).then((response) => response.json())
     .then((data) => {
       let shouldResetServerList = false;
@@ -75,7 +75,6 @@ function updateServerList(loginToken, callback) {
         serverListDiv.appendChild(breakline);
       });
       serverListDiv.appendChild(createServerDiv);
-      callback();
     });
 }
 
@@ -87,6 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   currentLoginToken = loginToken;
+  currentUsername = localStorage.getItem("username");
 
   document.getElementById("CreateServerButton").addEventListener("click", (e) => {
     window.location.href = "/edit-server/new";
@@ -98,12 +98,12 @@ document.addEventListener("DOMContentLoaded", () => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ loginToken }),
+    body: JSON.stringify({ username: localStorage.getItem("username") }),
   }).then((response) => response.json())
     .then((data) => {
-      if (data.success) {
+      if (data.status == "success") {
         currentUsername = data.username;
-        updateServerList(currentLoginToken, () => {});
+        updateServerList();
       } else {
         localStorage.removeItem("loginToken");
         window.location.href = "/sign-in";
@@ -112,5 +112,5 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 setInterval(() => {
-  updateServerList(currentLoginToken, () => {});
+  updateServerList();
 }, 2000);
