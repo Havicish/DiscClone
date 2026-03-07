@@ -1,7 +1,22 @@
 const http = require("http");
+const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const port = 3000;
+
+const domain = process.env.SSL_DOMAIN;
+const certPath = domain ? `/etc/letsencrypt/live/${domain}` : null;
+let sslOptions = null;
+if (certPath) {
+  try {
+    sslOptions = {
+      key: fs.readFileSync(`${certPath}/privkey.pem`),
+      cert: fs.readFileSync(`${certPath}/fullchain.pem`),
+    };
+  } catch (e) {
+    console.log("SSL certs not found, falling back to HTTP");
+  }
+}
 
 class APIListener {
   constructor(path, callback) {
@@ -34,7 +49,7 @@ function getContentType(filePath) {
   }
 }
 
-const server = http.createServer((req, res) => {
+const requestHandler = (req, res) => {
   const requestedPath = req.url.split("?")[0];
   const apiListener = apiListeners.find(listener => listener.path === requestedPath);
   //const servers = require("./server-handler").servers;
@@ -68,13 +83,18 @@ const server = http.createServer((req, res) => {
       }
     });
   }
-});
+};
+
+const server = sslOptions
+  ? https.createServer(sslOptions, requestHandler)
+  : http.createServer(requestHandler);
 
 const globalServersDirPath = path.join(__dirname, "../data", "servers");
 const globalAccountsDirPath = path.join(__dirname, "../data", "accounts");
 
 server.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
+  const protocol = sslOptions ? "https" : "http";
+  console.log(`Server is running on ${protocol}://localhost:${port}`);
 });
 
 module.exports = {

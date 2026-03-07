@@ -137,3 +137,7 @@ dist
 
 private/accounts.json
 data*
+certs/
+
+
+.claude/
