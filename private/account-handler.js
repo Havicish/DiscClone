@@ -117,10 +117,11 @@ addAPIListener("/createAccount", (req, res) => {
     }
 
     const newAccount = new Account(username, password);
+    const loginToken = newAccount.getLoginToken();
     newAccount.save();
 
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ success: true, loginToken: newAccount.getLoginToken() }));
+    res.end(JSON.stringify({ success: true, loginToken }));
     return;
   });
 });
