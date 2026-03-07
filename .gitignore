@@ -136,4 +136,4 @@ dist
 .pnp.*
 
 private/accounts.json
-public/AgeThingTest.py
+data*

@@ -21,9 +21,12 @@ class Message {
     this.id = id;
   }
 
-  render(messagesDiv, isHeader = false, isTrailing = false) {
+  render(messagesDiv, isHeader = false, isTrailing = false, isFirstMessage = false) {
     const date = new Date(this.timeCreated);
     const timeString = date.toLocaleString();
+
+    if (isHeader && !isFirstMessage)
+      messagesDiv.appendChild(document.createElement("br"));
 
     const messageDiv = document.createElement("div");
     messageDiv.className = "Message";
@@ -47,12 +50,8 @@ class Message {
     }
     messageDiv.appendChild(textElement);
     messageDiv.appendChild(timeElement);
-    if (isTrailing) {
-      messageDiv.appendChild(document.createElement("br"));
-      messageDiv.appendChild(document.createElement("br"));
-    }
     if (!isTrailing) {
-      messageDiv.style.marginBottom = "10px";
+      messageDiv.style.marginBottom = "5px";
     }
     messagesDiv.appendChild(messageDiv);
   }
@@ -90,7 +89,7 @@ function renderAllMessages(messagesDiv) {
 
   for (const clump of messageClumps) {
     for (const message of clump) {
-      message.render(messagesDiv, clump[0] === message, clump[clump.length - 1] === message);
+      message.render(messagesDiv, clump[0] === message, clump[clump.length - 1] === message, clump[0] === messages[0]);
     }
   }
 }

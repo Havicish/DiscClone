@@ -38,6 +38,8 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("Create").style.display = "block";
     document.getElementById("Edit").style.display = "none";
 
+    document.title = "Make a server - Symphony";
+
     document.getElementById("CancelServerButton").addEventListener("click", () => {
       window.location.href = "/";
     });

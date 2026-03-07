@@ -70,19 +70,8 @@ const server = http.createServer((req, res) => {
   }
 });
 
-const globalServersJSONPath = path.join(__dirname, "../data", "servers.json");
-const globalAccountsJSONPath = path.join(__dirname, "../data", "accounts.json");
-
 const globalServersDirPath = path.join(__dirname, "../data", "servers");
 const globalAccountsDirPath = path.join(__dirname, "../data", "accounts");
-
-if (!fs.existsSync(globalServersJSONPath)) {
-  fs.writeFileSync(globalServersJSONPath, JSON.stringify({}, null, 2));
-}
-
-if (!fs.existsSync(globalAccountsJSONPath)) {
-  fs.writeFileSync(globalAccountsJSONPath, JSON.stringify({}, null, 2));
-}
 
 server.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
@@ -90,8 +79,6 @@ server.listen(port, () => {
 
 module.exports = {
   addAPIListener,
-  globalAccountsJSONPath,
-  globalServersJSONPath,
   globalAccountsDirPath,
   globalServersDirPath
 };
