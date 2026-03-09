@@ -6,7 +6,7 @@ const globalServersJSONPath = require("./server").globalServersJSONPath;
 const globalServersDirPath = require("./server").globalServersDirPath;
 
 if (!fs.existsSync(globalServersDirPath)) {
-  fs.mkdirSync(path.join(globalServersDirPath, "servers"));
+  fs.mkdirSync(globalServersDirPath);
 }
 
 class Server {

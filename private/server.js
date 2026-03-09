@@ -89,8 +89,13 @@ const server = sslOptions
   ? https.createServer(sslOptions, requestHandler)
   : http.createServer(requestHandler);
 
+const globalDataDirPath = path.join(__dirname, "../data");
 const globalServersDirPath = path.join(__dirname, "../data", "servers");
 const globalAccountsDirPath = path.join(__dirname, "../data", "accounts");
+
+if (!fs.existsSync(globalDataDirPath)) {
+  fs.mkdirSync(globalDataDirPath);
+}
 
 server.listen(port, () => {
   const protocol = sslOptions ? "https" : "http";

@@ -1,4 +1,4 @@
-My home Mac:
+My home Mac & codespaces:
 docker run -v ./data:/workspaces/DiscClone/data -p 3000:3000 <sha256:UUID>
 
 Put other methods down here V V V:

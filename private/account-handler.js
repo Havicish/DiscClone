@@ -5,7 +5,7 @@ const { addAPIListener } = require("./server");
 const globalAccountsDirPath = require("./server").globalAccountsDirPath;
 
 if (!fs.existsSync(globalAccountsDirPath)) {
-  fs.mkdirSync(path.join(globalAccountsDirPath, "accounts"));
+  fs.mkdirSync(globalAccountsDirPath);
 }
 
 class Account {
