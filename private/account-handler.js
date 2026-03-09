@@ -1,3 +1,5 @@
+// TODO: Rework login tokens, and add session tokens.
+
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
@@ -100,13 +102,29 @@ addAPIListener("/createAccount", (req, res) => {
   });
 
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const username = data.username;
     const password = data.password;
 
     if (!username || !password) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "Missing fields" }));
+      return;
+    }
+
+    // Sanatise username and password.
+    // If the username escapes the accounts directory, return an error.
+    const tempLocalPath = path.join(globalAccountsDirPath, `${username}.json`);
+    if (!tempLocalPath.startsWith(globalAccountsDirPath)) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid username" }));
       return;
     }
 
@@ -134,7 +152,14 @@ addAPIListener("/login", (req, res) => {
   });
 
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const username = data.username;
     const password = data.password;
 
@@ -183,7 +208,14 @@ addAPIListener("/getAccountInfo", (req, res) => {
   });
 
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const username = data.username;
 
     const account = findAccountByUsername(username);

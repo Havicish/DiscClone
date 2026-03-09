@@ -34,7 +34,14 @@ addAPIListener("/getMessages", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const after = parseInt(data.after) || 0;
     const serverId = data.serverId;
     const server = findServerById(serverId);
@@ -66,7 +73,14 @@ addAPIListener("/deleteMessage", (req, res) => {
     res.writeHead(501, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "error", message: "Not implemented" }));
     return;
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const after = parseInt(data.after) || 0;
     const serverId = data.serverId;
     const server = findServerById(serverId);
@@ -92,12 +106,24 @@ addAPIListener("/sendMessage", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const account = getAndValidateAccount(data.username, data.loginToken, res);
     if (!account)
       return;
-    let msg = new Message(account.username, data.message);
     const server = findServerById(data.serverId);
+    if (!server.whitelist.includes(data.username)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    let msg = new Message(account.username, data.message);
     if (server) {
       server.messages.push(msg);
       server.save();

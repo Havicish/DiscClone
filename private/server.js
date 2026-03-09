@@ -73,6 +73,12 @@ const requestHandler = (req, res) => {
     if (req.url === "/sign-in") {
       filePath = path.join(__dirname, "../public", "sign-in.html");
     }
+    // If filepath isn't in the public folder, return 404
+    if (!filePath.startsWith(path.join(__dirname, "../public"))) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("404 Not Found");
+      return;
+    }
     fs.readFile(filePath, (err, data) => {
       if (err) {
         res.writeHead(404, { "Content-Type": "text/plain" });
@@ -93,6 +99,8 @@ const globalDataDirPath = path.join(__dirname, "../data");
 const globalServersDirPath = path.join(__dirname, "../data", "servers");
 const globalAccountsDirPath = path.join(__dirname, "../data", "accounts");
 
+// Only directory creation needed in this file.
+// Other creations are handled by other scripts.
 if (!fs.existsSync(globalDataDirPath)) {
   fs.mkdirSync(globalDataDirPath);
 }

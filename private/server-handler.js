@@ -80,7 +80,14 @@ addAPIListener("/getServerName", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const serverId = data.serverId;
     const server = findServerById(serverId);
     const account = getAndValidateAccount(data.username, data.loginToken, res);
@@ -108,7 +115,14 @@ addAPIListener("/getServers", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const account = getAndValidateAccount(data.username, data.loginToken, res);
     if (!account)
       return;
@@ -128,7 +142,14 @@ addAPIListener("/createServer", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const account = getAndValidateAccount(data.username, data.loginToken, res);
     if (!account)
       return;
@@ -153,7 +174,14 @@ addAPIListener("/editServer", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const account = getAndValidateAccount(data.username, data.loginToken, res);
     if (!account)
       return;
@@ -183,7 +211,14 @@ addAPIListener("/addServerWhitelist", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const account = getAndValidateAccount(data.username, data.loginToken, res);
     if (!account)
       return;
@@ -225,7 +260,14 @@ addAPIListener("/removeServerWhitelist", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    const data = JSON.parse(body);
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
     const account = getAndValidateAccount(data.username, data.loginToken, res);
     if (!account)
       return;
@@ -257,7 +299,7 @@ addAPIListener("/removeServerWhitelist", (req, res) => {
       res.end(JSON.stringify({ status: "ok", message: "Not in whitelist to begin with :middle_finger:", success: false }));  
       return;
     }
-    server.whitelist.splice(server.whitelist.indexOf(accountToRemove.username));
+    server.whitelist.splice(server.whitelist.indexOf(accountToRemove.username), 1);
     accountToRemove.servers.splice(accountToRemove.servers.indexOf(server.id));
     server.save();
     accountToRemove.save();
