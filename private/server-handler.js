@@ -154,6 +154,11 @@ addAPIListener("/createServer", (req, res) => {
     if (!account)
       return;
     const serverName = data.name;
+    if (typeof serverName !== "string" || serverName.trim() === "" || serverName.length > 60) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid server name" }));
+      return;
+    }
     const serverId = crypto.randomUUID();
     const newServer = new Server();
     newServer.id = serverId;
