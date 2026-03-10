@@ -58,9 +58,23 @@ addAPIListener("/getMessages", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
     }
-    const newMessages = server.messages.filter((msg) => msg.timeCreated > after);
+    const messagesToSend = [];
+    const cachedAccounts = {};
+    for (let msg of server.messages) {
+      if (msg.timeCreated > after) {
+        let user;
+        if (cachedAccounts[msg.username]) {
+          user = cachedAccounts[msg.username];
+        } else {
+          user = findAccountByUsername(msg.username);
+          cachedAccounts[msg.username] = user;
+        }
+        msg.usernameColor = user.usernameColor;
+        messagesToSend.push(msg);
+      }
+    }
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(newMessages));
+    res.end(JSON.stringify(messagesToSend));
   });
 });
 
@@ -81,22 +95,6 @@ addAPIListener("/deleteMessage", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
       return;
     }
-    const after = parseInt(data.after) || 0;
-    const serverId = data.serverId;
-    const server = findServerById(serverId);
-    if (!server) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    if (!server.whitelist.includes(findOrAddAccount(data.loginToken).username)) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    const newMessages = server.messages.filter((msg) => msg.timeCreated > after);
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(newMessages));
   });
 });
 
@@ -112,6 +110,11 @@ addAPIListener("/sendMessage", (req, res) => {
     } catch (e) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
+    if (data.message.trim() == "") {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Message cannot be empty" }));
       return;
     }
     const account = getAndValidateAccount(data.username, data.loginToken, res);

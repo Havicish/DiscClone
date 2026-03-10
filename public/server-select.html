@@ -20,6 +20,32 @@
       align-items: center;
     }
 
+    .CenterVertRight {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .TopBar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    a {
+      color: #ff6900;
+      text-decoration: underline;
+      font-family: "Nunito";
+    }
+
+    a:hover {
+      color: #bb4900;
+    }
+
+    a:active {
+      color: #882900;
+    }
+
     #ServerName {
       font-weight: bolder;
       font-size: 42px;
@@ -49,7 +75,7 @@
     }
 
     #MessageInput:focus {
-      outline-color: blue;
+      outline-color: #ff6900;
       outline-style: solid;
       outline-width: 2px;
     }
@@ -103,7 +129,7 @@
     }
 
     #SendButton:focus {
-      outline-color: blue;
+      outline-color: #ff6900;
       outline-style: solid;
       outline-width: 2px;
     }
@@ -119,7 +145,7 @@
     }
     
     #OpenServersButton:focus {
-      outline-color: blue;
+      outline-color: #ff6900;
     }
     
     #OpenServersButton:hover {
@@ -156,7 +182,7 @@
     }
 
     .OpenServer:focus {
-      outline-color: blue;
+      outline-color: #ff6900;
       outline-style: solid;
       outline-width: 1px;
     }
@@ -187,7 +213,7 @@
     }
 
     .EditServer:focus {
-      outline-color: blue;
+      outline-color: #ff6900;
       outline-style: solid;
       outline-width: 1px;
     }
@@ -218,7 +244,7 @@
     }
 
     #CreateServerButton:focus {
-      outline-color: blue;
+      outline-color: #ff6900;
       outline-style: solid;
       outline-width: 1px;
     }
@@ -236,8 +262,17 @@
   </style>
 </head>
 <body>
-  <div class="CenterVert">
-    <span id="ServerName">Server select</span>
+  <div class="TopBar">
+    <div class="CenterVert">
+      <span id="ServerName">Server select</span>
+    </div>
+    <div class="CenterVertRight">
+      <!-- Stays as ./sign-in -->
+      <!-- No need for .html -->
+      <a href="./edit-account">Account</a>
+      <span>&nbsp;&nbsp;</span>
+      <a href="./sign-in">Sign in</a>
+    </div>
   </div>
   <div class="Line"></div>
   <br>

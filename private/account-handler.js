@@ -20,6 +20,7 @@ class Account {
     this.maxFailedLoginAttempts = 5;
     this.lockedUntil = null;
     this.servers = [];
+    this.usernameColor = "#fff";
   }
 
   generateNewLoginToken() {
@@ -75,11 +76,18 @@ class Account {
   }
 
   save() {
-    fs.writeFileSync(path.join(globalAccountsDirPath, `${this.username}.json`), JSON.stringify(this, null, 2));
+    const localPath = path.join(globalAccountsDirPath, `${this.username.toLowerCase()}.json`);
+    if (!localPath.startsWith(globalAccountsDirPath)) {
+      console.error("Something has bypassed the username sanitization! Account not saved.");
+      console.error(`Username: ${this.username}`);
+      return;
+    }
+    fs.writeFileSync(localPath, JSON.stringify(this, null, 2));
   }
 }
 
 function findAccountByUsername(username) {
+  username = username.toLowerCase();
   const localPath = path.join(globalAccountsDirPath, `${username}.json`);
 
   if (!fs.existsSync(localPath))
@@ -94,6 +102,23 @@ function findAccountByUsername(username) {
   return account;
 }
 
+function getAndValidateAccount(username, loginToken, res) {
+  const account = findAccountByUsername(username);
+  if (!account) {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "error", message: "Account not found" }));
+    return null;
+  }
+
+  if (!account.isLoginTokenValid(loginToken)) {
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "error", message: "Invalid token" }));
+    return null;
+  }
+
+  return account;
+}
+
 addAPIListener("/createAccount", (req, res) => {
   let body = "";
 
@@ -102,45 +127,64 @@ addAPIListener("/createAccount", (req, res) => {
   });
 
   req.on("end", () => {
-    let data;
     try {
-      data = JSON.parse(body);
+      let data;
+      try {
+        data = JSON.parse(body);
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+        return;
+      }
+      const username = data.username;
+      const password = data.password;
+
+      if (!username || !password) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Missing fields" }));
+        return;
+      }
+
+      if (username.length > 30) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Invalid username; Username cannot be more than 30 characters" }));
+        return;
+      }
+
+      const regex0 = /[^a-z0-9]/ig;
+      if (username.match(regex0)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Invalid username; Username must be alphanumeric" }));
+        return;
+      }
+
+      // Sanatise username and password.
+      // If the username escapes the accounts directory, return an error.
+      const tempLocalPath = path.join(globalAccountsDirPath, `${username.toLowerCase()}.json`);
+      if (!tempLocalPath.startsWith(globalAccountsDirPath)) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ status: "error", message: "Invalid username" }));
+        return;
+      }
+
+      if (findAccountByUsername(username)) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ success: false, message: "Username already taken" }));
+        return;
+      }
+
+      const newAccount = new Account(username, password);
+      const loginToken = newAccount.getLoginToken();
+      newAccount.save();
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ success: true, loginToken }));
+      return;
     } catch (e) {
       res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      res.end(JSON.stringify({ status: "error", message: "Something went wrong" }));
       return;
     }
-    const username = data.username;
-    const password = data.password;
-
-    if (!username || !password) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Missing fields" }));
-      return;
-    }
-
-    // Sanatise username and password.
-    // If the username escapes the accounts directory, return an error.
-    const tempLocalPath = path.join(globalAccountsDirPath, `${username}.json`);
-    if (!tempLocalPath.startsWith(globalAccountsDirPath)) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid username" }));
-      return;
-    }
-
-    if (findAccountByUsername(username)) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ success: false, message: "Username already taken" }));
-      return;
-    }
-
-    const newAccount = new Account(username, password);
-    const loginToken = newAccount.getLoginToken();
-    newAccount.save();
-
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ success: true, loginToken }));
-    return;
   });
 });
 
@@ -200,6 +244,38 @@ addAPIListener("/login", (req, res) => {
   });
 });
 
+addAPIListener("/validateToken", (req, res) => {
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk;
+  });
+
+  req.on("end", () => {
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
+    const username = data.username;
+
+    const account = findAccountByUsername(username);
+
+    if (!account) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Account not found" }));
+      return;
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "success", username: account.username }));
+    return;
+  });
+});
+
 addAPIListener("/getAccountInfo", (req, res) => {
   let body = "";
 
@@ -228,6 +304,39 @@ addAPIListener("/getAccountInfo", (req, res) => {
 
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "success", username: account.username }));
+    return;
+  });
+});
+
+addAPIListener("/saveAccountChanges", (req, res) => {
+  let body = "";
+
+  req.on("data", (chunk) => {
+    body += chunk;
+  });
+
+  req.on("end", () => {
+    let data;
+    try {
+      data = JSON.parse(body);
+    } catch (e) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
+      return;
+    }
+
+    const loginToken = data.loginToken;
+    const username = data.username;
+
+    const account = getAndValidateAccount(username, loginToken, res);
+    if (!account)
+      return;
+
+    account.usernameColor = data.usernameColor;
+    account.save();
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "success" }));
     return;
   });
 });

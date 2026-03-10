@@ -36,9 +36,11 @@ function updateServerList() {
       const serverListDiv = document.getElementById("ServerList");
       const createServerDiv = document.getElementById("CreateServer");
       createServerDiv.style.display = "block";
+
       Array.from(serverListDiv.children).forEach((child) => {
         child.remove();
       });
+
       data.forEach((server) => {
         lastServerNames.push(server.name);
 
@@ -74,6 +76,15 @@ function updateServerList() {
         const breakline = document.createElement("br");
         serverListDiv.appendChild(breakline);
       });
+
+      if (data.length == 0) {
+        const msg = document.createElement("span");
+        msg.innerHTML = "No one's added you to any servers yet :(";
+        serverListDiv.appendChild(msg);
+        serverListDiv.appendChild(document.createElement("br"));
+        serverListDiv.appendChild(document.createElement("br"));
+      }
+
       serverListDiv.appendChild(createServerDiv);
     });
 }
@@ -93,7 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // check if token is valid, and sign in
-  fetch(backendURL + "/getAccountInfo", {
+  fetch(backendURL + "/validateToken", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

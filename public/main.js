@@ -14,11 +14,12 @@ let isShiftDown = false;
 const messages = [];
 
 class Message {
-  constructor(username, message, timeCreated, id) {
+  constructor(username, message, timeCreated, id, usernameColor) {
     this.username = username;
     this.message = message;
     this.timeCreated = timeCreated;
     this.id = id;
+    this.usernameColor = usernameColor;
   }
 
   render(messagesDiv, isHeader = false, isTrailing = false, isFirstMessage = false) {
@@ -34,6 +35,7 @@ class Message {
 
     const usernameElement = document.createElement("b");
     usernameElement.className = "Username";
+    usernameElement.style.color = this.usernameColor;
     usernameElement.innerText = this.username + ": ";
 
     const textElement = document.createElement("span");
@@ -70,8 +72,8 @@ function clearAllRenderedMessages(messagesDiv) {
   });
 }
 
-function createMessage(username, message, timeCreated, id) {
-  const newMessage = new Message(username, message, timeCreated, id);
+function createMessage(username, message, timeCreated, id, usernameColor) {
+  const newMessage = new Message(username, message, timeCreated, id, usernameColor);
   messages.push(newMessage);
 }
 
@@ -121,12 +123,17 @@ function getNewMessages(timeAfter, serverId) {
       if (data.length > 0) {
         clearAllMessages();
         data.forEach((msg) => {
-          createMessage(msg.username, msg.message, msg.timeCreated, msg.id);
+          createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor);
         });
         const messagesDiv = document.getElementById("Messages");
         if (isThereUnrenderedMessages(messagesDiv)) {
+          const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
+          const wasAtBottom = scrollDistFromBottom < 50;
           clearAllRenderedMessages(messagesDiv);
           renderAllMessages(messagesDiv);
+          if (wasAtBottom) {
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+          }
         }
       }
     });
@@ -250,8 +257,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  const messagesDiv = document.getElementById("Messages");
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
   // check if token is valid, and sign in
-  fetch(backendURL + "/getAccountInfo", {
+  fetch(backendURL + "/validateToken", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -73,6 +73,10 @@ const requestHandler = (req, res) => {
     if (req.url === "/sign-in") {
       filePath = path.join(__dirname, "../public", "sign-in.html");
     }
+
+    if (req.url === "/edit-account") {
+      filePath = path.join(__dirname, "../public", "edit-account.html");
+    }
     // If filepath isn't in the public folder, return 404
     if (!filePath.startsWith(path.join(__dirname, "../public"))) {
       res.writeHead(404, { "Content-Type": "text/plain" });

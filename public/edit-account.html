@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sign in - Symphony</title>
+  <title>Symphony</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
-  <link href="../favicon.ico" rel="icon" type="image/x-icon">
+  <link href="favicon.ico" rel="icon" type="image/x-icon">
   <style>
     body {
       background-color: black;
@@ -20,6 +20,11 @@
       height: 2px;
       background-color: #808080;
       display: block;
+    }
+
+    #PageName {
+      font-weight: bolder;
+      font-size: 42px;
     }
 
     input {
@@ -73,26 +78,21 @@
   </style>
 </head>
 <body>
-  <div class="CenterVert">
-    <a href="../">
-      <img src="../../HomeIcon.png" alt="Home" style="width: 50px; height: 50px;">
-    </a>
-    <span>&nbsp;&nbsp;</span>
-    <h1 id="ServerName">Sign in</h1>
+  <div class="TopBar">
+    <div class="CenterVert">
+      <span id="PageName">Your account</span>
+    </div>
   </div>
   <div class="Line"></div>
   <br>
-  <label for="Username">Username:</label>
-  <input id="Username">
+  <div>
+    <label for="UsernameColor">Change username color:</label>
+    <input type="color" value="#ffffff" id="UsernameColor">
+  </div>
   <br>
-  <br>
-  <label for="Password">Password:</label>
-  <input id="Password" type="password">
-  <br>
-  <br>
-  <button id="SignInButton">Sign in</button>
-  <span>‎‎</span>
-  <button id="CreateAccountButton">Create account</button>
-  <script src="./sign-in-main.js"></script>
+  <button id="CancelChangesButton">Cancel changes</button>
+  <span>&nbsp;</span>
+  <button id="SaveChangesButton">Save changes</button>
+  <script src="edit-account-main.js"></script>
 </body>
 </html>
