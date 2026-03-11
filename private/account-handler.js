@@ -10,14 +10,14 @@ if (!fs.existsSync(globalAccountsDirPath)) {
   fs.mkdirSync(globalAccountsDirPath);
 }
 
-for (let accountFile of fs.readdirSync(globalAccountsDirPath)) {
-  if (accountFile.endsWith(".json")) {
-    const filePath = path.join(globalAccountsDirPath, accountFile);
-    const newPath = path.join(globalAccountsDirPath, accountFile.toLowerCase());
+// for (let accountFile of fs.readdirSync(globalAccountsDirPath)) {
+//   if (accountFile.endsWith(".json")) {
+//     const filePath = path.join(globalAccountsDirPath, accountFile);
+//     const newPath = path.join(globalAccountsDirPath, accountFile.toLowerCase());
 
-    fs.renameSync(filePath, newPath);
-  }
-}
+//     fs.renameSync(filePath, newPath);
+//   }
+// }
 
 class Account {
   constructor(username, password) {
