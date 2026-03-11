@@ -84,9 +84,6 @@ addAPIListener("/deleteMessage", (req, res) => {
     body += chunk.toString();
   });
   req.on("end", () => {
-    res.writeHead(501, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: "Not implemented" }));
-    return;
     let data;
     try {
       data = JSON.parse(body);
@@ -95,6 +92,36 @@ addAPIListener("/deleteMessage", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
       return;
     }
+    const account = getAndValidateAccount(data.username, data.loginToken, res);
+    if (!account)
+      return;
+    const server = findServerById(data.serverId);
+    if (!server) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    if (!server.whitelist.includes(data.username)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
+      return;
+    }
+    const messageIndex = server.messages.findIndex((msg) => msg.id === data.messageId);
+    if (messageIndex === -1) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Message not found" }));
+      return;
+    }
+    const message = server.messages[messageIndex];
+    if (message.username !== data.username) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "You can only delete your own messages" }));
+      return;
+    }
+    server.messages.splice(messageIndex, 1);
+    server.save();
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ status: "success" }));
   });
 });
 
@@ -127,11 +154,16 @@ addAPIListener("/sendMessage", (req, res) => {
       return;
     }
     let msg = new Message(account.username, data.message);
+    if (data.message.length > 2000) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ status: "error", message: "Message too long" }));
+      return;
+    }
     if (server) {
       server.messages.push(msg);
       server.save();
     }
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok" }));
+    res.end(JSON.stringify({ status: "success" }));
   });
 });

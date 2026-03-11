@@ -13,6 +13,9 @@ let isShiftDown = false;
 
 const messages = [];
 
+const contextMenu = document.getElementById("ContextMenu");
+let contextMenuMessageId = null;
+
 class Message {
   constructor(username, message, timeCreated, id, usernameColor) {
     this.username = username;
@@ -20,6 +23,7 @@ class Message {
     this.timeCreated = timeCreated;
     this.id = id;
     this.usernameColor = usernameColor;
+    this.repliedTo = null;
   }
 
   render(messagesDiv, isHeader = false, isTrailing = false, isFirstMessage = false) {
@@ -56,6 +60,19 @@ class Message {
       messageDiv.style.marginBottom = "5px";
     }
     messagesDiv.appendChild(messageDiv);
+
+    messageDiv.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      contextMenu.style.display = "flex";
+      contextMenu.style.left = e.pageX + "px";
+      contextMenu.style.top = e.pageY + "px";
+      contextMenuMessageId = this.id;
+      if (isShiftDown) {
+        document.getElementById("CopyMessageIdButton").style.display = "block";
+      } else {
+        document.getElementById("CopyMessageIdButton").style.display = "none";
+      }
+    });
   }
 }
 
@@ -104,10 +121,14 @@ function isThereUnrenderedMessages(messagesDiv) {
       renderedMessages.push(id);
   });
 
-  for (const message of messages) {
-    if (!renderedMessages.includes(message.id))
+  if (renderedMessages.length != messages.length)
+    return true;
+
+  for (let i = 0; i < messages.length; i++) {
+    if (messages[i].id != renderedMessages[i])
       return true;
   }
+
   return false;
 }
 
@@ -120,16 +141,18 @@ function getNewMessages(timeAfter, serverId) {
     body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }),
   }).then((response) => response.json())
     .then((data) => {
+      const messagesDiv = document.getElementById("Messages");
+      clearAllMessages();
+      if (isThereUnrenderedMessages(messagesDiv)) {
+        clearAllRenderedMessages(messagesDiv);
+      }
       if (data.length > 0) {
-        clearAllMessages();
         data.forEach((msg) => {
           createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor);
         });
-        const messagesDiv = document.getElementById("Messages");
         if (isThereUnrenderedMessages(messagesDiv)) {
           const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
           const wasAtBottom = scrollDistFromBottom < 50;
-          clearAllRenderedMessages(messagesDiv);
           renderAllMessages(messagesDiv);
           if (wasAtBottom) {
             messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -148,7 +171,7 @@ function sendMessage(username, message, loginToken, serverId) {
     body: JSON.stringify({ username, message, loginToken, serverId }),
   }).then((response) => response.json())
     .then((data) => {
-      if (data.status === "ok") {
+      if (data.status === "success") {
         getNewMessages(0, serverId);
       }
     });
@@ -227,6 +250,57 @@ document.addEventListener("keyup", (event) => {
   if (event.key == "Shift")
     isShiftDown = false;
 });
+
+document.addEventListener("click", (event) => {
+  if (event.target.id != "ContextMenu" && !contextMenu.contains(event.target)) {
+    contextMenu.style.display = "none";
+  }
+});
+
+document.getElementById("DeleteMessageButton").addEventListener("click", () => {
+  if (contextMenuMessageId) {
+    fetch(backendURL + "/deleteMessage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ messageId: contextMenuMessageId, loginToken: currentLoginToken, username: currentUsername, serverId: currentServerId }),
+    }).then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          getNewMessages(0, currentServerId);
+        }
+      });
+  }
+  contextMenu.style.display = "none";
+});
+
+document.getElementById("CopyMessageIdButton").addEventListener("click", () => {
+  if (contextMenuMessageId) {
+    navigator.clipboard.writeText(contextMenuMessageId).then(() => {
+      alert("Message ID copied to clipboard!");
+    }).catch((err) => {
+      console.error("Failed to copy message ID: ", err);
+    });
+  }
+  contextMenu.style.display = "none";
+});
+
+document.getElementById("CopyMessageButton").addEventListener("click", () => {
+  if (contextMenuMessageId) {
+    const message = messages.find(msg => msg.id === contextMenuMessageId);
+    if (message) {
+      navigator.clipboard.writeText(message.message).then(() => {
+        alert("Message text copied to clipboard!");
+      }).catch((err) => {
+        console.error("Failed to copy message text: ", err);
+      });
+    }
+  }
+  contextMenu.style.display = "none";
+});
+
+document
 
 document.addEventListener("DOMContentLoaded", () => {
   const loginToken = localStorage.getItem("loginToken");
