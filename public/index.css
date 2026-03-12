@@ -299,6 +299,11 @@ button:active {
   color: #ff6900;
 }
 
+.BigMessage {
+  font-weight: bold;
+  font-size: xx-large;
+}
+
 :root {
   --messages-height: calc(100vh - 170px);
 }
