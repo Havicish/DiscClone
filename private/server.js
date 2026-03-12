@@ -44,6 +44,8 @@ function getContentType(filePath) {
       return "image/png";
     case ".ico":
       return "image/x-icon";
+    case ".m4a":
+      return "audio/m4a";
     case "":
       return "text/plain";
   }

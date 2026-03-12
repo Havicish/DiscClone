@@ -1,4 +1,4 @@
-import { mainContextMenu } from "./index-context-main.js";
+import { Message } from "./index-message-class.js";
 
 window.addEventListener("error", (err) => {
   alert(err.error);
@@ -20,91 +20,21 @@ export const messages = [];
 const contextMenu = document.getElementById("ContextMenu");
 let messageReplyToId = null;
 
-class Message {
-  constructor(username, message, timeCreated, id, usernameColor, replyTo = null) {
-    this.username = username;
-    this.message = message;
-    this.timeCreated = timeCreated;
-    this.id = id;
-    this.usernameColor = usernameColor;
-    this.repliedTo = replyTo;
-  }
+let isFocused = true;
+window.addEventListener("focus", () => {
+  isFocused = true;
+});
 
-  render(messagesDiv, isHeader = false, isTrailing = false, isFirstMessage = false) {
-    const date = new Date(this.timeCreated);
-    const timeString = date.toLocaleString();
+window.addEventListener("blur", () => {
+  isFocused = false;
+});
 
-    if (isHeader && !isFirstMessage)
-      messagesDiv.appendChild(document.createElement("br"));
-
-    const messageDiv = document.createElement("div");
-    messageDiv.className = "Message";
-    messageDiv.dataset.id = this.id;
-
-    if (this.repliedTo) {
-      const repliedToMessage = getMessageById(this.repliedTo);
-      const replyDiv = document.createElement("div");
-      replyDiv.className = "Reply";
-      messageDiv.appendChild(replyDiv);
-      if (repliedToMessage) {
-        replyDiv.addEventListener("click", () => {
-          const originalMessageElement = document.querySelector(`[data-id="${repliedToMessage.id}"]`);
-          if (originalMessageElement) {
-            const timeMessageElement = originalMessageElement.querySelector(".Time");
-            timeMessageElement.style.color = "#333333";
-            originalMessageElement.scrollIntoView({ behavior: "smooth", block: "center" });
-            originalMessageElement.style.backgroundColor = "#333333";
-            setTimeout(() => {
-              originalMessageElement.style.backgroundColor = "";
-              timeMessageElement.style.color = "";
-            }, 2000);
-          }
-        });
-        replyDiv.innerText = `Replying to ${repliedToMessage.username}: ${repliedToMessage.message}`;
-        if (repliedToMessage.message.length > 50) {
-          replyDiv.innerText = `Replying to ${repliedToMessage.username}: ${repliedToMessage.message.substring(0, 50)}...`;
-        }
-        if (repliedToMessage.username == currentUsername) {
-          replyDiv.dataset.isToThis = "true";
-        }
-      } else {
-        replyDiv.innerText = "Replying to (message not found)";
-      }
-    }
-
-    const usernameElement = document.createElement("b");
-    usernameElement.className = "Username";
-    usernameElement.style.color = this.usernameColor;
-    usernameElement.innerText = this.username + ": ";
-
-    const textElement = document.createElement("span");
-    textElement.className = "Text";
-    textElement.innerText = this.message + " ";
-
-    const timeElement = document.createElement("span");
-    timeElement.className = "Time";
-    timeElement.innerText = `(${timeString})`;
-
-    if (isHeader) {
-      messageDiv.appendChild(usernameElement);
-      messageDiv.appendChild(document.createElement("br"));
-    }
-    messageDiv.appendChild(textElement);
-    messageDiv.appendChild(timeElement);
-    if (!isTrailing) {
-      messageDiv.style.marginBottom = "5px";
-    }
-    messagesDiv.appendChild(messageDiv);
-
-    mainContextMenu.addMessageEvent(messageDiv);
-  }
-}
 
 export function setReplyId(id) {
   messageReplyToId = id;
 }
 
-function getMessageById(id) {
+export function getMessageById(id) {
   return messages.find((msg) => msg.id === id);
 }
 
@@ -195,6 +125,27 @@ export function getNewMessages(timeAfter, serverId) {
           messagesDiv.scrollTop = messagesDiv.scrollHeight;
         }
       }
+    });
+}
+
+function dontRenderNewMessages(timeAfter, serverId, callback) {
+  fetch(backendURL + "/getMessages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }),
+  }).then((response) => response.json())
+    .then((data) => {
+      let messages2 = [];
+
+      if (Array.isArray(data) && data.length > 0) {
+        data.forEach((msg) => {
+          messages2.push(new Message(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo));
+        });
+      }
+
+      callback(messages2);
     });
 }
 
@@ -386,6 +337,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+let lastCheckMessages = [];
 setInterval(() => {
-  getNewMessages(0, currentServerId);
+  for (let i = 0; i < lastCheckMessages.length; i++) {
+    let msg = lastCheckMessages[i];
+    if (!messages.find((m) => m.id === msg.id)) {
+      if (!isFocused) {
+        const messageSound = document.getElementById("MessageSound");
+        messageSound.volume = 0.3;
+        // messageSound.play();
+      }
+      getNewMessages(0, currentServerId);
+      break;
+    }
+  }
+  dontRenderNewMessages(Date.now() - 10000, currentServerId, (messages2) => {
+    lastCheckMessages = messages2;
+  });
 }, 2000);
