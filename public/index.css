@@ -282,7 +282,7 @@ button:active {
   font-size: smaller;
   color: #b0b0b0;
   user-select: none;
-  margin-top: 10px;
+  margin-top: 0px;
 }
 
 .Reply[data-is-to-this="true"] {

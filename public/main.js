@@ -41,11 +41,10 @@ class Message {
     messageDiv.className = "Message";
     messageDiv.dataset.id = this.id;
 
+    const replyDiv = document.createElement("div");
     if (this.repliedTo) {
       const repliedToMessage = getMessageById(this.repliedTo);
-      const replyDiv = document.createElement("div");
       replyDiv.className = "Reply";
-      messageDiv.appendChild(replyDiv);
       if (repliedToMessage) {
         replyDiv.addEventListener("click", () => {
           const originalMessageElement = document.querySelector(`[data-id="${repliedToMessage.id}"]`);
@@ -89,6 +88,8 @@ class Message {
       messageDiv.appendChild(usernameElement);
       messageDiv.appendChild(document.createElement("br"));
     }
+    if (this.repliedTo)
+      messageDiv.appendChild(replyDiv);
     messageDiv.appendChild(textElement);
     messageDiv.appendChild(timeElement);
     if (!isTrailing) {
