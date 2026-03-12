@@ -8,240 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,200..1000;1,200..1000&display=swap" rel="stylesheet">
   <link href="favicon.ico" rel="icon" type="image/x-icon">
-  <style>
-    body {
-      background-color: black;
-      color: white;
-      font-family: "Nunito";
-    }
-
-    .CenterVert {
-      display: flex;
-      align-items: center;
-    }
-
-    #ServerName {
-      font-weight: bolder;
-      font-size: 42px;
-    }
-
-    .Line {
-      width: calc(100% - 6px);
-      height: 2px;
-      background-color: #808080;
-      display: block;
-    }
-
-    #MessageInput {
-      width: calc(100% - 34px);
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      outline-color: white;
-      outline-style: solid;
-      outline-width: 2px;
-      background-color: black;
-      color: white;
-      font-family: "Nunito";
-      bottom: 4px;
-      left: 8px;
-      position: fixed;
-    }
-
-    #MessageInput:focus {
-      outline-color: #ff6900;
-      outline-style: solid;
-      outline-width: 2px;
-    }
-
-    .Time {
-      font-size: 50%;
-      font-weight: bold;
-      color: #000;
-      transition: color 0.3s;
-    }
-
-    #Messages {
-      height: calc(100vh - 170px);
-      overflow: auto;
-      border: solid white 1px;
-      border: none;
-      padding: 0px;
-    }
-
-    .Message:hover .Time {
-      color: #888;
-      transition: color 0.3s;
-    }
-
-    .Message:hover {
-      background-color: #111;
-      transition: background-color 0.3s;
-    }
-
-    .Message {
-      background-color: #000;
-      transition: background-color 0.3s;
-    }
-
-    #SendButton {
-      height: 52px;
-      width: 52px;
-      padding: 0px;
-      border-radius: 8px;
-      border: none;
-      outline-color: white;
-      outline-style: solid;
-      outline-width: 2px;
-      background-color: black;
-      color: white;
-      font-family: "Nunito";
-      bottom: 6px;
-      right: 8px;
-      position: fixed;
-    }
-
-    #OpenServersButton {
-      height: 34px;
-      /*width: 34px;*/
-      border-radius: 800px;
-      border: none;
-      outline-style: none;
-      font-size: larger;
-      font-weight: bold;
-      outline-color: #fff;
-      outline-style: solid;
-      outline-width: 1px;
-      background-color: black;
-      color: white;
-      font-family: "Nunito";
-      transform: translateX(10px);
-    }
-
-    #SendButton {
-      font-size: xx-large;
-    }
-
-    #SendButton:focus {
-      outline-color: #ff6900;
-      outline-style: solid;
-      outline-width: 2px;
-    }
-
-    #SendButton:hover {
-      background-color: white;
-      color: black;
-    }
-
-    #SendButton:active {
-      background-color: gray;
-      color: black;
-    }
-    
-    #OpenServersButton:focus {
-      outline-color: #ff6900;
-    }
-    
-    #OpenServersButton:hover {
-      background-color: white;
-      color: black;
-      outline-color: black;
-    }
-    
-    #OpenServersButton:active {
-      background-color: gray;
-      color: black;
-    }
-
-    #ServerList {
-      background-color: #202020;
-      border: solid white 1px;
-      border-radius: 8px;
-      padding: 10px;
-      display: inline;
-    }
-
-    .OpenServer {
-      height: 24px;
-      width: 60px;
-      border-radius: 8px;
-      border: none;
-      outline-color: white;
-      outline-style: solid;
-      outline-width: 1px;
-      background-color: black;
-      color: white;
-      font-family: "Nunito";
-      margin-left: 7px;
-    }
-
-    .OpenServer:focus {
-      outline-color: #ff6900;
-      outline-style: solid;
-      outline-width: 1px;
-    }
-
-    .OpenServer:hover {
-      background-color: white;
-      color: black;
-      outline-color: black;
-    }
-
-    .OpenServer:active {
-      background-color: gray;
-      color: black;
-    }
-
-    .ServerListServer {
-      display: inline;
-    }
-
-    .ContextMenu {
-      position: absolute;
-      background-color: #202020;
-      border: solid white 1px;
-      border-radius: 8px;
-      padding: 10px;
-      display: none;
-    }
-
-    .ContextMenu {
-      display: none;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .ContextMenu button {
-      width: 100%;
-    }
-
-    button {
-      border-radius: 4px;
-      border: none;
-      outline-color: white;
-      outline-style: solid;
-      outline-width: 2px;
-      background-color: black;
-      color: white;
-      font-family: "Nunito";
-    }
-
-    button:focus {
-      outline-color: #ff6900;
-      outline-style: solid;
-      outline-width: 2px;
-    }
-
-    button:hover {
-      background-color: white;
-      color: black;
-    }
-
-    button:active {
-      background-color: gray;
-      color: black;
-    }
-  </style>
+  <link rel="stylesheet" href="index.css">
 </head>
 <body>
   <div class="CenterVert">
@@ -261,14 +28,20 @@
   <div class="Line"></div>
   <br>
   <div id="Messages"></div>
-  <textarea id="MessageInput" placeholder="Type a message..." spellcheck="true"></textarea>
+  <div id="ReplyingTo">
+    <button id="ReplyingToCancelButton">X</button>
+    <span>&nbsp;</span>
+    <span id="ReplyingToText">Replying to: ___</span>
+  </div>
+  <textarea id="MessageInput" placeholder="Type a message..." spellcheck="true" autocorrect="off"></textarea>
   <button id="SendButton">></button>
   <div class="ContextMenu" id="ContextMenu">
-    <button id="DeleteMessageButton">Delete Message</button>
     <button id="ReplyMessageButton">Reply</button>
+    <!--<button id="EditMessageButton">Edit</button>-->
     <button id="CopyMessageButton">Copy text</button>
+    <button id="DeleteMessageButton">Delete Message</button>
     <button id="CopyMessageIdButton">Copy message ID</button>
   </div>
-  <script src="./main.js"></script>
+  <script src="./main.js" type="module"></script>
 </body>
 </html>

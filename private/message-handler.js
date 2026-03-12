@@ -3,11 +3,12 @@ const findServerById = require("./server-handler").findServerById;
 const findAccountByUsername = require("./account-handler").findAccountByUsername;
 
 class Message {
-  constructor(username, message) {
+  constructor(username, message, replyTo = null) {
     this.username = username;
     this.message = message;
     this.timeCreated = Date.now();
     this.id = crypto.randomUUID();
+    this.replyTo = replyTo;
   }
 }
 
@@ -113,7 +114,7 @@ addAPIListener("/deleteMessage", (req, res) => {
       return;
     }
     const message = server.messages[messageIndex];
-    if (message.username !== data.username) {
+    if (message.username !== data.username && server.owner !== data.username) {
       res.writeHead(403, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "error", message: "You can only delete your own messages" }));
       return;
@@ -153,10 +154,10 @@ addAPIListener("/sendMessage", (req, res) => {
       res.end(JSON.stringify({ status: "error", message: "Access denied" }));
       return;
     }
-    let msg = new Message(account.username, data.message);
-    if (data.message.length > 2000) {
+    let msg = new Message(account.username, data.message.trimEnd(), data.replyTo);
+    if (data.message.trimEnd().length > 2000) {
       res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Message too long" }));
+      res.end(JSON.stringify({ status: "error", message: `Message too long: ${data.message.trimEnd().length}/2000` }));
       return;
     }
     if (server) {
