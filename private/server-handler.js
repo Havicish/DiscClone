@@ -74,285 +74,125 @@ function getAndValidateAccount(username, loginToken, res) {
   return account;
 }
 
-addAPIListener("/getServerName", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
-    }
-    const serverId = data.serverId;
+addAPIListener("/getServerName", true, (data, account) => {
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+  if (!server.whitelist.includes(data.username)) {
+    return { code: 403, message: "Access denied" };
+  }
+  const name = server.name;
+  return { code: 200, message: "Server name retrieved", body: { name } };
+});
+
+addAPIListener("/getServers", true, (data, account) => {
+  const serverList = account.servers.map(serverId => {
     const server = findServerById(serverId);
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    if (!server) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
-      return;
-    }
-    if (!server.whitelist.includes(data.username)) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    const name = server.name;
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(name));
+    return { id: serverId, name: server ? server.name : "Unknown Server", owner: server ? server.owner : "Unknown" };
   });
+  return { code: 200, message: "Servers retrieved", body: { servers: serverList } };
 });
 
-addAPIListener("/getServers", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
-    }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    const serverList = account.servers.map(serverId => {
-      const server = findServerById(serverId);
-      return { id: serverId, name: server ? server.name : "Unknown Server", owner: server ? server.owner : "Unknown" };
-    });
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(serverList));
-    return;
-  });
+addAPIListener("/createServer", true, (data, account) => {
+  const serverName = data.name;
+  if (typeof serverName !== "string" || serverName.trim() === "" || serverName.length > 60) {
+    return { code: 400, message: "Invalid server name" };
+  }
+  const serverId = crypto.randomUUID();
+  const newServer = new Server();
+  newServer.id = serverId;
+  newServer.name = serverName;
+  newServer.owner = account.username;
+  newServer.whitelist.push(account.username);
+  fs.writeFileSync(path.join(globalServersDirPath, `${serverId}.json`), JSON.stringify(newServer, null, 2));
+  account.servers.push(serverId);
+  account.save();
+  return { code: 200, message: "Server created successfully", body: { serverId } };
 });
 
-addAPIListener("/createServer", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
-    }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    const serverName = data.name;
-    if (typeof serverName !== "string" || serverName.trim() === "" || serverName.length > 60) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid server name" }));
-      return;
-    }
-    const serverId = crypto.randomUUID();
-    const newServer = new Server();
-    newServer.id = serverId;
-    newServer.name = serverName;
-    newServer.owner = account.username;
-    newServer.whitelist.push(account.username);
-    fs.writeFileSync(path.join(globalServersDirPath, `${serverId}.json`), JSON.stringify(newServer, null, 2));
-    account.servers.push(serverId);
-    account.save();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", serverId, success: true }));
-  });
+addAPIListener("/editServer", true, (data, account) => {
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+  if (server.owner !== account.username) {
+    return { code: 403, message: "Access denied" };
+  }
+  server.name = data.name;
+  server.save();
+  return { code: 200, message: "Server edited successfully", body: { serverId } };
 });
 
-addAPIListener("/editServer", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
-    }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    const serverId = data.serverId;
-    const server = findServerById(serverId);
-    if (!server) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
-      return;
-    }
-    if (server.owner !== account.username) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    server.name = data.name;
-    server.save();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", serverId, success: true }));
-    return;
-  });
+addAPIListener("/addServerWhitelist", true, (data, account) => {
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+  if (server.owner !== account.username) {
+    return { code: 403, message: "Access denied" };
+  }
+  const accountToAdd = findAccountByUsername(data.usernameToAdd);
+  if (!accountToAdd) {
+    return { code: 404, message: "User not found" };
+  }
+  if (server.whitelist.includes(accountToAdd.username)) {
+    return { code: 200, message: "Already whitelisted", success: false };
+  }
+  server.whitelist.push(accountToAdd.username);
+  accountToAdd.servers.push(server.id);
+  server.save();
+  accountToAdd.save();
+  return { code: 200, message: "User added to whitelist successfully", body: { serverId } };
 });
 
-addAPIListener("/addServerWhitelist", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
-    }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    const serverId = data.serverId;
-    const server = findServerById(serverId);
-    if (!server) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
-      return;
-    }
-    if (server.owner !== account.username) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    const accountToAdd = findAccountByUsername(data.usernameToAdd);
-    if (!accountToAdd) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "User not found" }));
-      return;
-    }
-    if (server.whitelist.includes(accountToAdd.username)) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", message: "Already whitelisted", success: false }));  
-      return;
-    }
-    server.whitelist.push(accountToAdd.username);
-    accountToAdd.servers.push(server.id);
-    server.save();
-    accountToAdd.save();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", serverId, success: true }));
-  });
+addAPIListener("/removeServerWhitelist", true, (data, account) => {
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+  if (server.owner !== account.username) {
+    return { code: 403, message: "Access denied" };
+  }
+  const accountToRemove = findAccountByUsername(data.usernameToRemove);
+  if (!accountToRemove) {
+    return { code: 404, message: "User not found" };
+  }
+  if (accountToRemove.username == account.username) {
+    return { code: 400, message: "Nono, you can't remove yourself from the whitelist" };
+  }
+  if (!server.whitelist.includes(accountToRemove.username)) {
+    return { code: 400, message: "Not in whitelist to begin with :middle_finger:"};
+  }
+  server.whitelist.splice(server.whitelist.indexOf(accountToRemove.username), 1);
+  accountToRemove.servers.splice(accountToRemove.servers.indexOf(server.id), 1);
+  server.save();
+  accountToRemove.save();
+  return { code: 200, message: "User removed from whitelist successfully", body: { serverId } };
 });
 
-addAPIListener("/removeServerWhitelist", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
+addAPIListener("/deleteServer", true, (data, account) => {
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+  if (server.owner !== account.username) {
+    return { code: 403, message: "Access denied" };
+  }
+  for (const username of server.whitelist) {
+    const acc = findAccountByUsername(username);
+    if (acc) {
+      acc.servers.splice(acc.servers.indexOf(server.id), 1);
+      acc.save();
     }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    const serverId = data.serverId;
-    const server = findServerById(serverId);
-    if (!server) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
-      return;
-    }
-    if (server.owner !== account.username) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    const accountToRemove = findAccountByUsername(data.usernameToRemove);
-    if (!accountToRemove) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "User not found" }));
-      return;
-    }
-    if (accountToRemove.username == account.username) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", message: "Nono, you can't remove yourself from the whitelist", success: false }));
-      return;
-    }
-    if (!server.whitelist.includes(accountToRemove.username)) {
-      res.writeHead(200, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "ok", message: "Not in whitelist to begin with :middle_finger:", success: false }));  
-      return;
-    }
-    server.whitelist.splice(server.whitelist.indexOf(accountToRemove.username), 1);
-    accountToRemove.servers.splice(accountToRemove.servers.indexOf(server.id));
-    server.save();
-    accountToRemove.save();
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", serverId, success: true }));
-  });
-});
-
-addAPIListener("/deleteServer", (req, res) => {
-  let body = "";
-  req.on("data", (chunk) => {
-    body += chunk.toString();
-  });
-  req.on("end", () => {
-    let data;
-    try {
-      data = JSON.parse(body);
-    } catch (e) {
-      res.writeHead(400, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid JSON" }));
-      return;
-    }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
-    const serverId = data.serverId;
-    const server = findServerById(serverId);
-    if (!server) {
-      res.writeHead(404, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Server not found" }));
-      return;
-    }
-    if (server.owner !== account.username) {
-      res.writeHead(403, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Access denied" }));
-      return;
-    }
-    for (const username of server.whitelist) {
-      const acc = findAccountByUsername(username);
-      if (acc) {
-        acc.servers.splice(acc.servers.indexOf(server.id), 1);
-        acc.save();
-      }
-    }
-    fs.unlinkSync(path.join(globalServersDirPath, `${serverId}.json`));
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", success: true }));
-  });
+  }
+  fs.unlinkSync(path.join(globalServersDirPath, `${serverId}.json`));
+  return { code: 200, message: "Server deleted successfully" };
 });
 
 module.exports = {
