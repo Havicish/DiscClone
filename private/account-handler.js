@@ -10,15 +10,6 @@ if (!fs.existsSync(globalAccountsDirPath)) {
   fs.mkdirSync(globalAccountsDirPath);
 }
 
-// for (let accountFile of fs.readdirSync(globalAccountsDirPath)) {
-//   if (accountFile.endsWith(".json")) {
-//     const filePath = path.join(globalAccountsDirPath, accountFile);
-//     const newPath = path.join(globalAccountsDirPath, accountFile.toLowerCase());
-
-//     fs.renameSync(filePath, newPath);
-//   }
-// }
-
 class Account {
   constructor(username, password) {
     this.username = username;
@@ -36,8 +27,7 @@ class Account {
     const daysUntilExpiration = 14;
 
     this.currentLoginToken = crypto.randomUUID();
-    this.loginTokenExpirationDate =
-      Date.now() + daysUntilExpiration * 24 * 60 * 60 * 1000;
+    this.loginTokenExpirationDate = Date.now() + daysUntilExpiration * 24 * 60 * 60 * 1000;
 
     return this.currentLoginToken;
   }
