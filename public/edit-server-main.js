@@ -3,6 +3,9 @@ backendURL = location.origin;
 
 let currentUsername = localStorage.getItem("username");
 
+let timesClickedDelete = 0;
+let lastClickedDeleteTime = 0;
+
 window.addEventListener("error", (event) => {
   console.error("Error occurred:", event.error);
   alert("An error occurred: " + event.error.message);
@@ -180,8 +183,56 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("EditServerWhitelistInput").value = "";
     });
 
+    document.getElementById("DeleteServerButton").addEventListener("click", () => {
+      timesClickedDelete++;
+      lastClickedDeleteTime = 2;
+      
+      document.getElementById("DeleteServerButton").innerText = `DELETE SERVER (${5 - timesClickedDelete})`;
+
+      if (timesClickedDelete >= 5) {
+        fetch("/deleteServer", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            serverId: window.location.pathname.split("/").pop(),
+            username: currentUsername,
+            loginToken
+          }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.success) {
+              alert("Server deleted successfully!");
+              window.location.href = "/";
+            } else {
+              alert("Error deleting server: " + data.message);
+            }
+          })
+          .catch((err) => {
+            console.error("Error deleting server:", err);
+            alert("An error occurred while deleting the server.");
+          });
+      }
+    });
+
     document.getElementById("CancelChangesButton").addEventListener("click", () => {
       window.location.href = "/";
     });
   }
 });
+
+let lastTime = 0;
+setInterval(() => {
+  let currTime = performance.now();
+  let dt = (currTime - lastTime) / 1000;
+  lastTime = currTime;
+
+  lastClickedDeleteTime -= dt;
+
+  if (lastClickedDeleteTime <= 0) {
+    timesClickedDelete = 0;
+    document.getElementById("DeleteServerButton").innerText = "DELETE SERVER";
+  }
+}, 100);
