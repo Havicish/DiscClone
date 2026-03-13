@@ -78,7 +78,7 @@ const requestHandler = (req, res) => {
         
         const returnValue = apiListener.callback(data, account);
 
-        let sendData = { message: returnValue.message };
+        let sendData = { code: returnValue.code, message: returnValue.message };
         if (returnValue.body) {
           for (let key in returnValue.body) {
             sendData[key] = returnValue.body[key];
@@ -90,7 +90,7 @@ const requestHandler = (req, res) => {
       } else {
         const returnValue = apiListener.callback(data, null);
 
-        let sendData = { message: returnValue.message };
+        let sendData = { code: returnValue.code, message: returnValue.message };
         if (returnValue.body) {
           for (let key in returnValue.body) {
             sendData[key] = returnValue.body[key];
