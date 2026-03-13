@@ -128,7 +128,7 @@ function getAndValidateAccount(username, loginToken, res) {
   return account;
 }
 
-addAPIListener("/createAccount", false, (data, account) => {
+addAPIListener("/createAccount", false, (data, _) => {
   const username = data.username;
   const password = data.password;
 
@@ -163,7 +163,7 @@ addAPIListener("/createAccount", false, (data, account) => {
   return { code: 200, message: "Account created successfully", body: { loginToken } };
 });
 
-addAPIListener("/login", false, (data, account) => {
+addAPIListener("/login", false, (data, _) => {
   const username = data.username;
   const password = data.password;
 
@@ -180,8 +180,6 @@ addAPIListener("/login", false, (data, account) => {
   if (!account.attemptLogin(password)) {
     account.save();
     if (!account.isLocked()) {
-      res.writeHead(401, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ status: "error", message: "Invalid username or password" }));
       return { code: 401, message: "Invalid username or password" };
     } else {
       const dateObj = new Date(account.lockedUntil);
@@ -199,7 +197,7 @@ addAPIListener("/validateToken", true, (data, account) => {
   return { code: 200, message: "Account found", body: { username: account.username } };
 });
 
-addAPIListener("/getAccountInfo", true, (data, account) => {
+addAPIListener("/getAccountInfo", false, (data, _) => {
   const username = data.username;
 
   const account = findAccountByUsername(username);

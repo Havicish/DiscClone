@@ -82,9 +82,6 @@ addAPIListener("/sendMessage", true, (data, account) => {
     if (data.message.trim() == "") {
       return { code: 400, message: "Message cannot be empty" };
     }
-    const account = getAndValidateAccount(data.username, data.loginToken, res);
-    if (!account)
-      return;
     const server = findServerById(data.serverId);
     if (!server.whitelist.includes(data.username)) {
       return { code: 403, message: "Access denied" };
