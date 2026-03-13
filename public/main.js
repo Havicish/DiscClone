@@ -7,6 +7,18 @@ window.addEventListener("error", (err) => {
 export let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
 backendURL = location.origin;
 
+function sendToServer(endpoint, sendData, callback) {
+  return fetch(backendURL + endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(sendData)
+  })
+  .then(response => response.json())
+  .then(data => callback(data));
+}
+
 export let currentUsername = localStorage.getItem("username");
 export let currentLoginToken = localStorage.getItem("loginToken");
 export let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
@@ -99,54 +111,40 @@ function isThereUnrenderedMessages(messagesDiv) {
 }
 
 export function getNewMessages(timeAfter, serverId) {
-  fetch(backendURL + "/getMessages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }),
-  }).then((response) => response.json())
-    .then((data) => {
-      const messagesDiv = document.getElementById("Messages");
-      const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
-      const wasAtBottom = scrollDistFromBottom < 50;
+  sendToServer("/getMessages", { after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    const messagesDiv = document.getElementById("Messages");
+    const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
+    const wasAtBottom = scrollDistFromBottom < 50;
 
-      clearAllMessages();
-      if (Array.isArray(data) && data.length > 0) {
-        data.forEach((msg) => {
-          createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo);
-        });
-      }
+    clearAllMessages();
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      data.messages.forEach((msg) => {
+        createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo);
+      });
+    }
 
-      if (isThereUnrenderedMessages(messagesDiv)) {
-        clearAllRenderedMessages(messagesDiv);
-        renderAllMessages(messagesDiv);
-        if (wasAtBottom) {
-          messagesDiv.scrollTop = messagesDiv.scrollHeight;
-        }
+    if (isThereUnrenderedMessages(messagesDiv)) {
+      clearAllRenderedMessages(messagesDiv);
+      renderAllMessages(messagesDiv);
+      if (wasAtBottom) {
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
       }
-    });
+    }
+  });
 }
 
 function dontRenderNewMessages(timeAfter, serverId, callback) {
-  fetch(backendURL + "/getMessages", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }),
-  }).then((response) => response.json())
-    .then((data) => {
-      let messages2 = [];
+  sendToServer("/getMessages", { after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    let messages2 = [];
 
-      if (Array.isArray(data) && data.length > 0) {
-        data.forEach((msg) => {
-          messages2.push(new Message(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo));
-        });
-      }
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      data.messages.forEach((msg) => {
+        messages2.push(new Message(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo));
+      });
+    }
 
-      callback(messages2);
-    });
+    callback(messages2);
+  });
 }
 
 function sendMessage(username, message, loginToken, serverId) {
@@ -154,79 +152,59 @@ function sendMessage(username, message, loginToken, serverId) {
   messageReplyToId = null;
   document.getElementById("ReplyingTo").style.display = "none";
   document.documentElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
-  fetch(backendURL + "/sendMessage", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ username, message, loginToken, serverId, replyTo }),
-  }).then((response) => response.json())
-    .then((data) => {
-      if (data.status === "success" || data.status === "ok") {
-        getNewMessages(0, serverId);
-      } else {
-        alert("Failed to send message: " + data.message);
-      }
-    });
+
+  sendToServer("/sendMessage", { username, message, loginToken, serverId, replyTo }, (data) => {
+    if (data.code == 200) {
+      getNewMessages(0, serverId);
+    } else {
+      alert("Failed to send message: " + data.message);
+    }
+  });
 }
 
 function getServerName(loginToken, serverId) {
-  fetch(backendURL + "/getServerName", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ loginToken, serverId, username: currentUsername }),
-  }).then((response) => response.json())
-    .then((data) => {
-      if (typeof data == "string") {
-        document.getElementById("ServerName").innerText = data;
-        document.title = data + " - Symphony";
-      } else {
-        document.getElementById("ServerName").innerText = "Access denied";
-        document.title = "Access denied - Symphony";
-      }
-    });
+  sendToServer("/getServerName", { loginToken, serverId, username: currentUsername }, (data) => {
+    if (typeof data.name == "string") {
+      document.getElementById("ServerName").innerText = data.name;
+      document.title = data.name + " - Symphony";
+    } else {
+      document.getElementById("ServerName").innerText = "Access denied";
+      document.title = "Access denied - Symphony";
+    }
+  });
 }
 
 function updateServerList(loginToken, callback) {
-  fetch(backendURL + "/getServers", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ loginToken, username: currentUsername }),
-  }).then((response) => response.json())
-    .then((data) => {
-      const serverListDiv = document.getElementById("ServerList");
-      Array.from(serverListDiv.children).forEach((child) => {
-        child.remove();
-      });
-      data.forEach((server) => {
-        const serverDiv = document.createElement("div");
-        serverDiv.className = "ServerListServer";
-
-        const nameSpan = document.createElement("span");
-        nameSpan.innerText = server.name;
-
-        const openButton = document.createElement("button");
-        openButton.className = "OpenServer";
-        openButton.dataset.serverId = server.id;
-        openButton.innerText = "Open";
-        openButton.addEventListener("click", () => {
-          window.location.href = "/server/" + server.id;
-        });
-
-        const paddingSpan = document.createElement("span");
-        paddingSpan.innerHTML = "&nbsp;&nbsp;";
-
-        serverDiv.appendChild(nameSpan);
-        serverDiv.appendChild(openButton);
-        serverDiv.appendChild(paddingSpan);
-        serverListDiv.appendChild(serverDiv);
-      });
-      callback();
+  sendToServer("/getServers", { loginToken, username: currentUsername }, (data) => {
+    const serverListDiv = document.getElementById("ServerList");
+    Array.from(serverListDiv.children).forEach((child) => {
+      child.remove();
     });
+    data.forEach((server) => {
+      const serverDiv = document.createElement("div");
+      serverDiv.className = "ServerListServer";
+
+      const nameSpan = document.createElement("span");
+      nameSpan.innerText = server.name;
+
+      const openButton = document.createElement("button");
+      openButton.className = "OpenServer";
+      openButton.dataset.serverId = server.id;
+      openButton.innerText = "Open";
+      openButton.addEventListener("click", () => {
+        window.location.href = "/server/" + server.id;
+      });
+
+      const paddingSpan = document.createElement("span");
+      paddingSpan.innerHTML = "&nbsp;&nbsp;";
+
+      serverDiv.appendChild(nameSpan);
+      serverDiv.appendChild(openButton);
+      serverDiv.appendChild(paddingSpan);
+      serverListDiv.appendChild(serverDiv);
+    });
+    callback();
+  });
 }
 
 document.addEventListener("keydown", (event) => {
@@ -317,24 +295,16 @@ document.addEventListener("DOMContentLoaded", () => {
     document.documentElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
   });
 
-  // check if token is valid, and sign in
-  fetch(backendURL + "/validateToken", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ loginToken, username: currentUsername }),
-  }).then((response) => response.json())
-    .then((data) => {
-      if (data.status == "success") {
-        currentUsername = data.username;
-        getNewMessages(0, currentServerId);
-        getServerName(currentLoginToken, currentServerId);
-      } else {
-        localStorage.removeItem("loginToken");
-        window.location.href = "/sign-in";
-      }
-    });
+  sendToServer("/validateToken", { loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    if (data.code == 200) {
+      currentUsername = data.username;
+      getNewMessages(0, currentServerId);
+      getServerName(currentLoginToken, currentServerId);
+    } else {
+      localStorage.removeItem("loginToken");
+      window.location.href = "/sign-in";
+    }
+  });
 });
 
 let lastCheckMessages = [];

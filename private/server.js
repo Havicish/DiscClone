@@ -19,13 +19,14 @@ if (certPath) {
 }
 
 class APIListener {
-  constructor(path, callback) {
+  constructor(path, needsValidation, callback) {
     this.path = path;
+    this.needsValidation = needsValidation;
     this.callback = callback;
   }
 }
-function addAPIListener(path, callback) {
-  apiListeners.push(new APIListener(path, callback));
+function addAPIListener(path, needsValidation, callback) {
+  apiListeners.push(new APIListener(path, needsValidation, callback));
 }
 const apiListeners = [];
 
@@ -56,7 +57,50 @@ const requestHandler = (req, res) => {
   const apiListener = apiListeners.find(listener => listener.path === requestedPath);
   //const servers = require("./server-handler").servers;
   if (apiListener) {
-    apiListener.callback(req, res);
+    const getAndValidateAccount = require("./account-handler").getAndValidateAccount;
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString();
+    });
+    req.on("end", () => {
+      let data;
+      try {
+        data = JSON.parse(body);
+      } catch (e) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ message: "Invalid JSON" }));
+        return;
+      }
+      if (apiListener.needsValidation) {
+        const account = getAndValidateAccount(data.username, data.loginToken, res);
+        if (!account)
+          return;
+        
+        const returnValue = apiListener.callback(data, account);
+
+        let sendData = { code: returnValue.code, message: returnValue.message };
+        if (returnValue.body) {
+          for (let key in returnValue.body) {
+            sendData[key] = returnValue.body[key];
+          }
+        }
+
+        res.writeHead(returnValue.code, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(sendData));
+      } else {
+        const returnValue = apiListener.callback(data, null);
+
+        let sendData = { code: returnValue.code, message: returnValue.message };
+        if (returnValue.body) {
+          for (let key in returnValue.body) {
+            sendData[key] = returnValue.body[key];
+          }
+        }
+
+        res.writeHead(returnValue.code, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(sendData));
+      }
+    });
   } else {
     let filePath = path.join(__dirname, "../public", req.url === "/" ? "index.html" : req.url);
     if (req.url.includes("server/")) {

@@ -5,6 +5,18 @@ window.addEventListener("error", (err) => {
 let backendURL = "https://humble-potato-977rxx7grjw5fgg-3000.app.github.dev";
 backendURL = location.origin;
 
+function sendToServer(endpoint, sendData, callback) {
+  return fetch(backendURL + endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(sendData)
+  })
+  .then(response => response.json())
+  .then(data => callback(data));
+}
+
 let currentUsername = localStorage.getItem("username");
 let currentLoginToken = localStorage.getItem("loginToken");
 let currentServerId = location.pathname.split("/")[1] === "server" ? location.pathname.split("/")[2] : null;
@@ -118,48 +130,36 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const colorEle = document.getElementById("UsernameColor");
+  const cancelChangesButton = document.getElementById("CancelChangesButton");
+  const saveChangesButton = document.getElementById("SaveChangesButton");
+
   colorEle.addEventListener("change", () => {
     const hsl = HEXtoHSL(colorEle.value);
     hsl.l = Math.max(30, hsl.l);
     colorEle.value = HSLToHex(hsl);
   });
 
-  document.getElementById("CancelChangesButton").addEventListener("click", () => {
+  cancelChangesButton.addEventListener("click", () => {
     window.location = "/";
   });
 
-  document.getElementById("SaveChangesButton").addEventListener("click", () => {
-    fetch(backendURL + "/saveAccountChanges", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ loginToken: currentLoginToken, username: currentUsername, usernameColor: colorEle.value }),
-    }).then((response) => response.json())
-      .then((data) => {
-        if (data.status == "success") {
-          alert("Account saved successfully");
-          window.location = "/";
-        } else {
-          alert("Error: " + data.message);
-        }
-      });
-  });
-
-  // check if token is valid, and sign in
-  fetch(backendURL + "/validateToken", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ loginToken: currentLoginToken, username: currentUsername }),
-  }).then((response) => response.json())
-    .then((data) => {
-      if (data.status == "success") {
-        currentUsername = data.username;
+  saveChangesButton.addEventListener("click", () => {
+    sendToServer("/saveAccountChanges", { loginToken: currentLoginToken, username: currentUsername, usernameColor: colorEle.value }, (data) => {
+      if (data.code == 200) {
+        alert("Account saved successfully");
+        window.location = "/";
       } else {
-        localStorage.removeItem("loginToken");
-        window.location.href = "/sign-in";
+        alert("Error: " + data.message);
       }
     });
+  });
+
+  sendToServer("/validateToken", { loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    if (data.code == 200) {
+      currentUsername = data.username;
+    } else {
+      localStorage.removeItem("loginToken");
+      window.location.href = "/sign-in";
+    }
+  });
 });
