@@ -321,7 +321,7 @@ setInterval(() => {
       break;
     }
   }
-  dontRenderNewMessages(Date.now() - 10000, currentServerId, (messages2) => {
+  dontRenderNewMessages(Date.now() - 60000, currentServerId, (messages2) => {
     lastCheckMessages = messages2;
   });
 }, 2000);
