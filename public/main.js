@@ -189,7 +189,7 @@ function updateServerList(loginToken, callback) {
     Array.from(serverListDiv.children).forEach((child) => {
       child.remove();
     });
-    data.forEach((server) => {
+    data.servers.forEach((server) => {
       const serverDiv = document.createElement("div");
       serverDiv.className = "ServerListServer";
 
