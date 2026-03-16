@@ -32,15 +32,24 @@ export const messages = [];
 const contextMenu = document.getElementById("ContextMenu");
 let messageReplyToId = null;
 
+let timeBlurred = null;
+
 let isFocused = true;
 window.addEventListener("focus", () => {
   isFocused = true;
+  if (timeBlurred) {
+    const timeAway = Date.now() - timeBlurred;
+    if (timeAway > 60000) {
+      getNewMessages(0, currentServerId);
+    }
+    timeBlurred = null;
+  }
 });
 
 window.addEventListener("blur", () => {
   isFocused = false;
+  timeBlurred = Date.now();
 });
-
 
 export function setReplyId(id) {
   messageReplyToId = id;
