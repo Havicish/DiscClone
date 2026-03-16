@@ -85,8 +85,9 @@ function renderAllMessages(messagesDiv) {
   let messageClumps = [[]];
   let currentClump = messages[0].username;
 
-  for (const message of messages) {
-    if (message.username != currentClump) {
+  for (const i in messages) {
+    const message = messages[i];
+    if (i == 0 || message.username != currentClump || Math.abs(message.timeCreated - messages[i - 1].timeCreated) > 60 * 60 * 1000) {
       messageClumps.push([]);
       currentClump = message.username;
     }
