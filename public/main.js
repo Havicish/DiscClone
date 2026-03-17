@@ -44,6 +44,9 @@ window.addEventListener("focus", () => {
     }
     timeBlurred = null;
   }
+  setTimeout(() => {
+    document.title = `${currentServerName} - Symphony`;
+  }, 2000);
 });
 
 window.addEventListener("blur", () => {
@@ -87,7 +90,7 @@ function renderAllMessages(messagesDiv) {
 
   for (const i in messages) {
     const message = messages[i];
-    if (i == 0 || message.username != currentClump || Math.abs(message.timeCreated - messages[i - 1].timeCreated) > 60 * 60 * 1000) {
+    if (i == 0 || message.username != currentClump || Math.abs(message.timeCreated - messages[i - 1].timeCreated) > message.timeGroupDifference * 60 * 1000) {
       messageClumps.push([]);
       currentClump = message.username;
     }
@@ -99,6 +102,12 @@ function renderAllMessages(messagesDiv) {
       message.render(messagesDiv, clump[0] === message, clump[clump.length - 1] === message, clump[0] === messages[0]);
     }
   }
+}
+
+function getUnreadMessageCount(timeAfter, serverId, callback) {
+  sendToServer("/getMessageCount", { after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    callback(data.count);
+  });
 }
 
 function isThereUnrenderedMessages(messagesDiv) {
@@ -140,6 +149,8 @@ export function getNewMessages(timeAfter, serverId) {
         messagesDiv.scrollTop = messagesDiv.scrollHeight;
       }
     }
+
+    localStorage.setItem(`lastRead_${currentServerId}_${currentUsername}`, Date.now());
   });
 }
 
@@ -172,11 +183,13 @@ function sendMessage(username, message, loginToken, serverId) {
   });
 }
 
+let currentServerName = "Server";
 function getServerName(loginToken, serverId) {
   sendToServer("/getServerName", { loginToken, serverId, username: currentUsername }, (data) => {
     if (typeof data.name == "string") {
       document.getElementById("ServerName").innerText = data.name;
       document.title = data.name + " - Symphony";
+      currentServerName = data.name;
     } else {
       document.getElementById("ServerName").innerText = "Access denied";
       document.title = "Access denied - Symphony";
@@ -323,9 +336,13 @@ setInterval(() => {
     let msg = lastCheckMessages[i];
     if (!messages.find((m) => m.id === msg.id)) {
       if (!isFocused) {
+        getUnreadMessageCount(timeBlurred, currentServerId, (count) => {
+          document.title = `(${count}) ${currentServerName} - Symphony`;
+        });
+
         const messageSound = document.getElementById("MessageSound");
         messageSound.volume = 0.3;
-        // messageSound.play();
+        messageSound.play();
       }
       getNewMessages(0, currentServerId);
       break;

@@ -23,6 +23,12 @@ let currentServerId = location.pathname.split("/")[1] === "server" ? location.pa
 
 let lastServerNames = [];
 
+function getUnreadMessageCount(timeAfter, serverId, callback) {
+  sendToServer("/getMessageCount", { after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    callback(data.count);
+  });
+}
+
 function updateServerList() {
   sendToServer("/getServers", { loginToken: currentLoginToken, username: currentUsername }, (data) => {
     let shouldResetServerList = false;
@@ -31,6 +37,17 @@ function updateServerList() {
       if (!lastServerNames.includes(server.name)) {
         shouldResetServerList = true;
       }
+
+      const nameSpan = document.getElementById(`ServerName_${server.id}`);
+      const storageItem = localStorage.getItem(`lastRead_${server.id}_${currentUsername}`);
+      if (!storageItem) {
+        localStorage.setItem(`lastRead_${server.id}_${currentUsername}`, Date.now());
+      }
+      getUnreadMessageCount(storageItem, server.id, (count) => {
+        if (count > 0) {
+          nameSpan.innerText = `(${count}) ${server.name}`;
+        }
+      });
     });
 
     if (!shouldResetServerList && lastServerNames.length > 0)
@@ -53,6 +70,7 @@ function updateServerList() {
       serverDiv.className = "ServerListServer";
 
       const nameSpan = document.createElement("span");
+      nameSpan.id = `ServerName_${server.id}`;
       nameSpan.innerText = server.name;
 
       const openButton = document.createElement("button");

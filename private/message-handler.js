@@ -96,3 +96,17 @@ addAPIListener("/sendMessage", true, (data, account) => {
     }
     return { code: 200, message: "Message sent successfully" };
 });
+
+addAPIListener("/getMessageCount", true, (data, account) => {
+  const after = parseInt(data.after) || 0;
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 403, message: "Access denied" };
+  }
+  if (!server.whitelist.includes(account.username)) {
+    return { code: 403, message: "Access denied" };
+  }
+  const count = server.messages.filter((msg) => msg.timeCreated > after).length;
+  return { code: 200, message: "Message count retrieved", body: { count } };
+});

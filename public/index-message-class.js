@@ -62,6 +62,7 @@ export class Message {
     this.id = id;
     this.usernameColor = usernameColor;
     this.repliedTo = replyTo;
+    this.timeGroupDifference = 15; // In minutes
   }
 
   render(messagesDiv, isHeader = false, isTrailing = false, isFirstMessage = false) {

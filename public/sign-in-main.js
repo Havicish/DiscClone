@@ -20,7 +20,7 @@ createAccountButton.addEventListener("click", () => {
   const username = document.getElementById("Username").value;
   const password = document.getElementById("Password").value;
 
-  sendToServer("/create-account", { username, password }, (data) => {
+  sendToServer("/createAccount", { username, password }, (data) => {
     if (data.code == 200) {
       localStorage.setItem("loginToken", data.loginToken);
       localStorage.setItem("username", username);
