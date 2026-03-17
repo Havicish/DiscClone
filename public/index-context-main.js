@@ -24,7 +24,7 @@ document.getElementById("DeleteMessageButton").addEventListener("click", () => {
       body: JSON.stringify({ messageId: mainContextMenu.messageId, loginToken: currentLoginToken, username: currentUsername, serverId: currentServerId }),
     }).then((response) => response.json())
       .then((data) => {
-        if (data.status === "success") {
+        if (data.code == 200) {
           getNewMessages(0, currentServerId);
         }
       });
