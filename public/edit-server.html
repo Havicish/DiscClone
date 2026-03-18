@@ -81,6 +81,33 @@
       background-color: #ff0000;
       color: white;
     }
+
+    #DeleteServerButton:hover {
+      color: black;
+    }
+
+    #CurrentWhitelist {
+      padding: 10px;
+      border-radius: 4px;
+      outline-color: #c0c0c0;
+      outline-style: solid;
+      outline-width: 2px;
+      margin-left: 25px;
+      width: fit-content;
+      color: #c0c0c0;
+      font-size: 12px;
+    }
+
+    #CurrentWhitelist #OpenCurrentWhitelist b {
+      color: white;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    #OpenCurrentWhitelistButton {
+      margin-left: 25px;
+      margin-bottom: 10px;
+    }
   </style>
 </head>
 <body>
@@ -122,6 +149,20 @@
     <span>&nbsp;</span>
     <button id="RemoveUserButton">Remove</button>
     <br>
+    <br>
+    <button id="OpenCurrentWhitelistButton">Open</button>
+    <div id="CurrentWhitelist">
+      <div id="ClosedCurrentWhitelist" style="display: block;">
+        <b>Current whitelist: (closed)</b>
+      </div>
+      <div id="OpenCurrentWhitelist" style="display: none;">
+        <b>Current whitelist:</b>
+        <br>
+        <span id="CurrentWhitelistUser_example0">example0</span>
+        <br>
+        <span id="CurrentWhitelistUser_example1">example1</span>
+      </div>
+    </div>
     <br>
     <button id="CancelChangesButton">Cancel changes</button>
     <span>&nbsp;</span>

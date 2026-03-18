@@ -23,12 +23,14 @@ window.addEventListener("error", (event) => {
   alert("An error occurred: " + event.error.message);
 });
 
-function getServerName(loginToken, serverId) {
+function getServerName(loginToken, serverId, callback) {
   const serverNameElement = document.getElementById("ServerName");
   sendToServer("/getServerName", { loginToken, username: currentUsername, serverId }, (data) => {
     if (typeof data.name == "string") {
       serverNameElement.innerText = "Edit the " + data.name + " server";
       document.title = "Edit " + data.name + " - Symphony";
+      if (callback)
+        callback(data.name);
     } else {
       serverNameElement.innerText = "Access denied";
       document.title = "Access denied - Symphony";
@@ -85,7 +87,9 @@ document.addEventListener("DOMContentLoaded", () => {
     createSection.style.display = "none";
     editSection.style.display = "block";
 
-    getServerName(loginToken, window.location.pathname.split("/").pop());
+    getServerName(loginToken, window.location.pathname.split("/").pop(), (serverName) => {
+      editServerNameInput.value = serverName;
+    });
 
     saveChangesButton.addEventListener("click", () => {
       sendToServer("/editServer", {
