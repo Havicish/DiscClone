@@ -362,7 +362,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-  editServerButton.href = `/edit-server/${currentServerId}`;
+  sendToServer("/getServerOwner", { serverId: currentServerId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    if (data.owner == currentUsername) {
+      editServerButton.style.display = "inline-block";
+      editServerButton.href = `/edit-server/${currentServerId}`;
+    } else {
+      editServerButton.style.display = "none";
+    }
+  });
 
   sendButton.addEventListener("click", (e) => {
     const message = messageInput.value.trim();

@@ -190,6 +190,18 @@ addAPIListener("/getServerWhitelist", true, (data, account) => {
   return { code: 200, message: "Whitelist retrieved successfully", body: { whitelist: server.whitelist } };
 });
 
+addAPIListener("/getServerOwner", true, (data, account) => {
+  const serverId = data.serverId;
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+  if (!server.whitelist.includes(account.username)) {
+    return { code: 403, message: "Access denied" };
+  }
+  return { code: 200, message: "Server owner retrieved successfully", body: { owner: server.owner } };
+});
+
 module.exports = {
   Server,
   findServerById
