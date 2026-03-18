@@ -357,9 +357,12 @@ document.addEventListener("DOMContentLoaded", () => {
   const serverListDiv = document.getElementById("ServerList");
   const messageInput = document.getElementById("MessageInput");
   const replyingTo = document.getElementById("ReplyingTo");
+  const editServerButton = document.getElementById("EditServerButton");
   const docElement = document.documentElement;
 
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+  editServerButton.href = `/edit-server/${currentServerId}`;
 
   sendButton.addEventListener("click", (e) => {
     const message = messageInput.value.trim();

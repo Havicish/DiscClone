@@ -9,6 +9,19 @@ body {
   align-items: center;
 }
 
+.CenterVertRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  margin-right: 6px;
+}
+
+.TopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 #ServerName {
   font-weight: bolder;
   font-size: 42px;
@@ -306,4 +319,18 @@ button:active {
 
 :root {
   --messages-height: calc(100vh - 170px);
+}
+
+a {
+  color: #ff6900;
+  text-decoration: underline;
+  font-family: "Nunito";
+}
+
+a:hover {
+  color: #bb4900;
+}
+
+a:active {
+  color: #882900;
 }

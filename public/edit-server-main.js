@@ -57,6 +57,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const editServerWhitelistInput = document.getElementById("EditServerWhitelistInput");
   const serverNameInput = document.getElementById("ServerNameInput");
   const editServerNameInput = document.getElementById("EditServerNameInput");
+  const toggleWhitelistButton = document.getElementById("ToggleCurrentWhitelistButton");
+  const openCurrentWhitelist = document.getElementById("OpenCurrentWhitelist");
+  const closedCurrentWhitelist = document.getElementById("ClosedCurrentWhitelist");
 
   if (window.location.href.includes("edit-server/new")) {
     createSection.style.display = "block";
@@ -89,6 +92,37 @@ document.addEventListener("DOMContentLoaded", () => {
 
     getServerName(loginToken, window.location.pathname.split("/").pop(), (serverName) => {
       editServerNameInput.value = serverName;
+    });
+
+    toggleWhitelistButton.addEventListener("click", () => {
+      if (openCurrentWhitelist.style.display === "none") {
+        openCurrentWhitelist.style.display = "block";
+        closedCurrentWhitelist.style.display = "none";
+        toggleWhitelistButton.innerText = "Close";
+
+        sendToServer("/getServerWhitelist", {
+          serverId: window.location.pathname.split("/").pop(),
+          username: currentUsername,
+          loginToken
+        }, (data) => {
+          if (data.code == 200) {
+            openCurrentWhitelist.innerHTML = "<b>Current whitelist:</b><br>";
+            data.whitelist.forEach(username => {
+              const span = document.createElement("span");
+              span.innerText = username;
+              openCurrentWhitelist.appendChild(span);
+              const br = document.createElement("br");
+              openCurrentWhitelist.appendChild(br);
+            });
+          } else {
+            alert("Error fetching whitelist: " + data.message);
+          }
+        });
+      } else {
+        openCurrentWhitelist.style.display = "none";
+        closedCurrentWhitelist.style.display = "block";
+        toggleWhitelistButton.innerText = "Open";
+      }
     });
 
     saveChangesButton.addEventListener("click", () => {
