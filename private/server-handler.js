@@ -57,23 +57,6 @@ function findServerById(id) {
   return server;
 }
 
-function getAndValidateAccount(username, loginToken, res) {
-  const account = findAccountByUsername(username);
-  if (!account) {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: "Account not found" }));
-    return null;
-  }
-
-  if (!account.isLoginTokenValid(loginToken)) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: "Invalid token" }));
-    return null;
-  }
-
-  return account;
-}
-
 addAPIListener("/getServerName", true, (data, account) => {
   const serverId = data.serverId;
   const server = findServerById(serverId);
@@ -166,7 +149,7 @@ addAPIListener("/removeServerWhitelist", true, (data, account) => {
     return { code: 400, message: "Nono, you can't remove yourself from the whitelist" };
   }
   if (!server.whitelist.includes(accountToRemove.username)) {
-    return { code: 400, message: "Not in whitelist to begin with :middle_finger:"};
+    return { code: 400, message: "Not in whitelist to begin with"};
   }
   server.whitelist.splice(server.whitelist.indexOf(accountToRemove.username), 1);
   accountToRemove.servers.splice(accountToRemove.servers.indexOf(server.id), 1);

@@ -32,6 +32,9 @@ export const messages = [];
 const contextMenu = document.getElementById("ContextMenu");
 let messageReplyToId = null;
 
+let currentMessageIndex = 50;
+let grabMessageCount = 50;
+
 let timeBlurred = null;
 
 let isFocused = true;
@@ -78,6 +81,30 @@ function clearAllRenderedMessages(messagesDiv) {
 function createMessage(username, message, timeCreated, id, usernameColor, replyTo = null) {
   const newMessage = new Message(username, message, timeCreated, id, usernameColor, replyTo);
   messages.push(newMessage);
+}
+
+function createOrEditMessage(messageData) {
+  const existingMessage = messages.find((msg) => msg.id === messageData.id);
+  if (existingMessage) {
+    for (const key in messageData) {
+      existingMessage[key] = messageData[key];
+    }
+  } else {
+    createMessage(messageData.username, messageData.message, messageData.timeCreated, messageData.id, messageData.usernameColor, messageData.replyTo);
+  }
+}
+
+function sortMessagesByTime() {
+  messages.sort((a, b) => a.timeCreated - b.timeCreated);
+}
+
+function quickCheckIfMessagesAreSorted() {
+  for (let i = 1; i < messages.length; i++) {
+    if (messages[i].timeCreated < messages[i - 1].timeCreated) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function renderAllMessages(messagesDiv) {
@@ -129,18 +156,20 @@ function isThereUnrenderedMessages(messagesDiv) {
   return false;
 }
 
-export function getNewMessages(timeAfter, serverId) {
-  sendToServer("/getMessages", { after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+export function getNewMessages(messagesAfter, messageCount, serverId) {
+  sendToServer("/getMessages", { after: messagesAfter, count: messageCount, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
     const messagesDiv = document.getElementById("Messages");
     const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
     const wasAtBottom = scrollDistFromBottom < 50;
 
-    clearAllMessages();
     if (Array.isArray(data.messages) && data.messages.length > 0) {
       data.messages.forEach((msg) => {
-        createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo);
+        createOrEditMessage(msg);
       });
     }
+
+    if (!quickCheckIfMessagesAreSorted())
+      sortMessagesByTime();
 
     if (isThereUnrenderedMessages(messagesDiv)) {
       clearAllRenderedMessages(messagesDiv);
@@ -154,8 +183,31 @@ export function getNewMessages(timeAfter, serverId) {
   });
 }
 
-function dontRenderNewMessages(timeAfter, serverId, callback) {
-  sendToServer("/getMessages", { after: timeAfter, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+function getNewMessagesNoScroll(messagesAfter, messageCount, serverId) {
+  sendToServer("/getMessages", { after: messagesAfter, count: messageCount, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
+    const messagesDiv = document.getElementById("Messages");
+
+    if (Array.isArray(data.messages) && data.messages.length > 0) {
+      data.messages.forEach((msg) => {
+        createOrEditMessage(msg);
+      });
+    }
+
+    if (!quickCheckIfMessagesAreSorted())
+      sortMessagesByTime();
+
+    const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
+    if (isThereUnrenderedMessages(messagesDiv)) {
+      clearAllRenderedMessages(messagesDiv);
+      renderAllMessages(messagesDiv);
+    }
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight - scrollDistFromBottom - messagesDiv.clientHeight;
+  });
+}
+
+function dontRenderNewMessages(messagesAfter, messageCount, serverId, callback) {
+  sendToServer("/getMessages", { after: messagesAfter, count: messageCount, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
     let messages2 = [];
 
     if (Array.isArray(data.messages) && data.messages.length > 0) {
@@ -169,14 +221,17 @@ function dontRenderNewMessages(timeAfter, serverId, callback) {
 }
 
 function sendMessage(username, message, loginToken, serverId) {
+  const replyingTo = document.getElementById("ReplyingTo");
+  const docElement = document.documentElement;
+
   const replyTo = messageReplyToId;
   messageReplyToId = null;
-  document.getElementById("ReplyingTo").style.display = "none";
-  document.documentElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
+  replyingTo.style.display = "none";
+  docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
 
   sendToServer("/sendMessage", { username, message, loginToken, serverId, replyTo }, (data) => {
     if (data.code == 200) {
-      getNewMessages(0, serverId);
+      getNewMessages(currentMessageIndex, grabMessageCount, serverId);
     } else {
       alert("Failed to send message: " + data.message);
     }
@@ -185,13 +240,15 @@ function sendMessage(username, message, loginToken, serverId) {
 
 let currentServerName = "Server";
 function getServerName(loginToken, serverId) {
+  const serverNameSpan = document.getElementById("ServerName");
+
   sendToServer("/getServerName", { loginToken, serverId, username: currentUsername }, (data) => {
     if (typeof data.name == "string") {
-      document.getElementById("ServerName").innerText = data.name;
+      serverNameSpan.innerText = data.name;
       document.title = data.name + " - Symphony";
       currentServerName = data.name;
     } else {
-      document.getElementById("ServerName").innerText = "Access denied";
+      serverNameSpan.innerText = "Access denied";
       document.title = "Access denied - Symphony";
     }
   });
@@ -231,13 +288,18 @@ function updateServerList(loginToken, callback) {
 }
 
 document.addEventListener("keydown", (event) => {
-  if (event.key == "Enter" && document.activeElement.id == "MessageInput" && document.getElementById("MessageInput").value.trim() != "" && !isShiftDown) {
-    document.getElementById("SendButton").click();
+  const sendButton = document.getElementById("SendButton");
+  const messageInput = document.getElementById("MessageInput");
+  const replyingTo = document.getElementById("ReplyingTo");
+  const docElement = document.documentElement;
+
+  if (event.key == "Enter" && document.activeElement.id == "MessageInput" && messageInput.value.trim() != "" && !isShiftDown) {
+    sendButton.click();
     event.preventDefault();
   }
 
   if (event.key.length == 1 && document.activeElement.id != "MessageInput" && !isCtrlDown && !isCmdDown)
-    document.getElementById("MessageInput").focus();
+    messageInput.focus();
 
   if (event.key == "Shift")
     isShiftDown = true;
@@ -253,8 +315,8 @@ document.addEventListener("keydown", (event) => {
     }
     if (messageReplyToId) {
       messageReplyToId = null;
-      document.getElementById("ReplyingTo").style.display = "none";
-      document.documentElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
+      replyingTo.style.display = "none";
+      docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
       return;
     }
   }
@@ -289,39 +351,60 @@ document.addEventListener("DOMContentLoaded", () => {
   currentLoginToken = loginToken;
 
   const messagesDiv = document.getElementById("Messages");
+  const sendButton = document.getElementById("SendButton");
+  const openServersButton = document.getElementById("OpenServersButton");
+  const replyingToCancelButton = document.getElementById("ReplyingToCancelButton");
+  const serverListDiv = document.getElementById("ServerList");
+  const messageInput = document.getElementById("MessageInput");
+  const replyingTo = document.getElementById("ReplyingTo");
+  const docElement = document.documentElement;
+
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 
-  document.getElementById("SendButton").addEventListener("click", (e) => {
-    const messageInput = document.getElementById("MessageInput");
+  sendButton.addEventListener("click", (e) => {
+    const message = messageInput.value.trim();
 
-    sendMessage(currentUsername, messageInput.value, currentLoginToken, currentServerId);
+    sendMessage(currentUsername, message, currentLoginToken, currentServerId);
     messageInput.value = "";
   });
 
-  document.getElementById("OpenServersButton").addEventListener("click", (e) => {
-    if (document.getElementById("OpenServersButton").innerHTML === "&nbsp;Servers &gt;&nbsp;") {
-      document.getElementById("OpenServersButton").innerHTML = "...";
+  openServersButton.addEventListener("click", (e) => {
+    if (openServersButton.innerHTML === "&nbsp;Servers &gt;&nbsp;") {
+      openServersButton.innerHTML = "...";
       updateServerList(currentLoginToken, () => {
-        document.getElementById("OpenServersButton").innerHTML = "&nbsp;&lt;&nbsp;";
-        document.getElementById("ServerList").style.display = "block";
+        openServersButton.innerHTML = "&nbsp;&lt;&nbsp;";
+        serverListDiv.style.display = "block";
       });
     } else {
-      document.getElementById("OpenServersButton").innerHTML = "&nbsp;Servers &gt;&nbsp;";
-      document.getElementById("ServerList").style.display = "none";
+      openServersButton.innerHTML = "&nbsp;Servers &gt;&nbsp;";
+      serverListDiv.style.display = "none";
     }
   });
 
-  document.getElementById("ReplyingToCancelButton").addEventListener("click", () => {
+  replyingToCancelButton.addEventListener("click", () => {
     messageReplyToId = null;
-    document.getElementById("MessageInput").value = "";
-    document.getElementById("ReplyingTo").style.display = "none";
-    document.documentElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
+    messageInput.value = "";
+    replyingTo.style.display = "none";
+    docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
+  });
+
+  messagesDiv.addEventListener("scroll", () => {
+    const scrollTop = messagesDiv.scrollTop;
+    if (scrollTop == 0) {
+      currentMessageIndex += grabMessageCount;
+      getNewMessagesNoScroll(currentMessageIndex, grabMessageCount, currentServerId);
+    }
+    // if (scrollDistFromBottom <= 0.5) {
+    //   currentMessageIndex = Math.max(grabMessageCount, currentMessageIndex - grabMessageCount);
+    //   getNewMessagesNoScroll(currentMessageIndex, grabMessageCount, currentServerId);
+    //   messagesDiv.scrollTop = messagesDiv.scrollHeight - scrollDistFromBottom;
+    // }
   });
 
   sendToServer("/validateToken", { loginToken: currentLoginToken, username: currentUsername }, (data) => {
     if (data.code == 200) {
       currentUsername = data.username;
-      getNewMessages(0, currentServerId);
+      getNewMessages(currentMessageIndex, grabMessageCount, currentServerId);
       getServerName(currentLoginToken, currentServerId);
     } else {
       localStorage.removeItem("loginToken");
@@ -344,11 +427,11 @@ setInterval(() => {
         messageSound.volume = 0.3;
         messageSound.play();
       }
-      getNewMessages(0, currentServerId);
+      getNewMessages(currentMessageIndex, grabMessageCount, currentServerId);
       break;
     }
   }
-  dontRenderNewMessages(Date.now() - 60000, currentServerId, (messages2) => {
+  dontRenderNewMessages(currentMessageIndex, grabMessageCount, currentServerId, (messages2) => {
     lastCheckMessages = messages2;
   });
 }, 2000);

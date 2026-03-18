@@ -12,25 +12,9 @@ class Message {
   }
 }
 
-function getAndValidateAccount(username, loginToken, res) {
-  const account = findAccountByUsername(username);
-  if (!account) {
-    res.writeHead(404, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: "Account not found" }));
-    return null;
-  }
-
-  if (!account.isLoginTokenValid(loginToken)) {
-    res.writeHead(401, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ status: "error", message: "Invalid token" }));
-    return null;
-  }
-
-  return account;
-}
-
 addAPIListener("/getMessages", true, (data, account) => {
-  const after = parseInt(data.after) || 0;
+  const after = parseInt(data.after) || 25;
+  const count = parseInt(data.count) || 25;
   const serverId = data.serverId;
   const server = findServerById(serverId);
   if (!server) {
@@ -41,8 +25,11 @@ addAPIListener("/getMessages", true, (data, account) => {
   }
   const messagesToSend = [];
   const cachedAccounts = {};
-  for (let msg of server.messages) {
-    if (msg.timeCreated > after) {
+  const msgsLen = server.messages.length;
+  let messagesAdded = 0;
+  for (let i = msgsLen - 1; i >= 0; i--) {
+    const msg = server.messages[i];
+    if (i < msgsLen - after + count) {
       let user;
       if (cachedAccounts[msg.username]) {
         user = cachedAccounts[msg.username];
@@ -52,8 +39,12 @@ addAPIListener("/getMessages", true, (data, account) => {
       }
       msg.usernameColor = user.usernameColor;
       messagesToSend.push(msg);
+      messagesAdded++;
+      if (messagesAdded >= count)
+        break;
     }
   }
+  messagesToSend.reverse();
   return { code: 200, message: "Messages retrieved", body: { messages: messagesToSend } };
 });
 
