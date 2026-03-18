@@ -70,6 +70,30 @@ function createMessage(username, message, timeCreated, id, usernameColor, replyT
   messages.push(newMessage);
 }
 
+function createOrEditMessage(messageData) {
+  const existingMessage = messages.find((msg) => msg.id === messageData.id);
+  if (existingMessage) {
+    for (const key in messageData) {
+      existingMessage[key] = messageData[key];
+    }
+  } else {
+    createMessage(messageData.username, messageData.message, messageData.timeCreated, messageData.id, messageData.usernameColor, messageData.replyTo);
+  }
+}
+
+function sortMessagesByTime() {
+  messages.sort((a, b) => a.timeCreated - b.timeCreated);
+}
+
+function quickCheckIfMessagesAreSorted() {
+  for (let i = 1; i < messages.length; i++) {
+    if (messages[i].timeCreated < messages[i - 1].timeCreated) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function renderAllMessages(messagesDiv) {
   if (messages.length === 0) {
     return;
@@ -118,12 +142,14 @@ export function getNewMessages(messagesAfter, messageCount, serverId) {
     const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
     const wasAtBottom = scrollDistFromBottom < 50;
 
-    clearAllMessages();
     if (Array.isArray(data.messages) && data.messages.length > 0) {
       data.messages.forEach((msg) => {
-        createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo);
+        createOrEditMessage(msg);
       });
     }
+
+    if (!quickCheckIfMessagesAreSorted())
+      sortMessagesByTime();
 
     if (isThereUnrenderedMessages(messagesDiv)) {
       clearAllRenderedMessages(messagesDiv);
@@ -139,17 +165,22 @@ function getNewMessagesNoScroll(messagesAfter, messageCount, serverId) {
   sendToServer("/getMessages", { after: messagesAfter, count: messageCount, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
     const messagesDiv = document.getElementById("Messages");
 
-    clearAllMessages();
     if (Array.isArray(data.messages) && data.messages.length > 0) {
       data.messages.forEach((msg) => {
-        createMessage(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo);
+        createOrEditMessage(msg);
       });
     }
 
+    if (!quickCheckIfMessagesAreSorted())
+      sortMessagesByTime();
+
+    const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
     if (isThereUnrenderedMessages(messagesDiv)) {
       clearAllRenderedMessages(messagesDiv);
       renderAllMessages(messagesDiv);
     }
+
+    messagesDiv.scrollTop = messagesDiv.scrollHeight - scrollDistFromBottom - messagesDiv.clientHeight;
   });
 }
 
@@ -337,13 +368,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const scrollTop = messagesDiv.scrollTop;
     if (scrollTop == 0) {
       currentMessageIndex += grabMessageCount;
-      getNewMessages(currentMessageIndex, grabMessageCount, currentServerId);
-    }
-    const scrollDistFromBottom = messagesDiv.scrollHeight - messagesDiv.clientHeight - messagesDiv.scrollTop;
-    if (scrollDistFromBottom < 50) {
-      currentMessageIndex -= grabMessageCount;
       getNewMessagesNoScroll(currentMessageIndex, grabMessageCount, currentServerId);
     }
+    // if (scrollDistFromBottom <= 0.5) {
+    //   currentMessageIndex = Math.max(grabMessageCount, currentMessageIndex - grabMessageCount);
+    //   getNewMessagesNoScroll(currentMessageIndex, grabMessageCount, currentServerId);
+    //   messagesDiv.scrollTop = messagesDiv.scrollHeight - scrollDistFromBottom;
+    // }
   });
 
   sendToServer("/validateToken", { loginToken: currentLoginToken, username: currentUsername }, (data) => {
