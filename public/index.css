@@ -87,10 +87,6 @@ body {
   white-space: pre-wrap;
 }
 
-.Text {
-  color: red;
-}
-
 #SendButton {
   height: 52px;
   width: 52px;
