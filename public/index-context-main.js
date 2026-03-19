@@ -1,4 +1,4 @@
-import { messages, setReplyId, backendURL, currentUsername, currentLoginToken, currentServerId, deleteMessage } from "./main.js";
+import { messages, setReplyId, setEditingMessageId, backendURL, currentUsername, currentLoginToken, currentServerId, deleteMessage } from "./main.js";
 
 const messagesDiv = document.getElementById("Messages");
 
@@ -73,6 +73,23 @@ document.getElementById("ReplyMessageButton").addEventListener("click", () => {
   mainContextMenu.hide();
 });
 
+document.getElementById("EditMessageButton").addEventListener("click", () => {
+  if (mainContextMenu.messageId) {
+    const message = messages.find(msg => msg.id === mainContextMenu.messageId);
+    if (message) {
+      const messageInput = document.getElementById("MessageInput");
+      messageInput.focus();
+      messageInput.value = message.message;
+      setEditingMessageId(mainContextMenu.messageId);
+      document.getElementById("EditingMessage").style.display = "flex";
+      document.getElementById("EditingMessageText").innerText = `Editing message: ${message.message}`;
+      document.documentElement.style.setProperty("--messages-height", "calc(100vh - 200px)");
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+  }
+  mainContextMenu.hide();
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   mainContextMenu.element = document.getElementById("ContextMenu");
   mainContextMenu.shiftElements = [document.getElementById("CopyMessageIdButton")];
@@ -112,7 +129,19 @@ class ContextMenu {
     element.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       this.show();
-      this.setPos(event.pageX, event.pageY);
+      if (event.pageX + this.element.clientWidth > window.innerWidth) {
+        if (event.pageY + this.element.clientHeight > window.innerHeight) {
+          this.setPos(window.innerWidth - this.element.clientWidth - 10, window.innerHeight - this.element.clientHeight - 10);
+        } else {
+          this.setPos(window.innerWidth - this.element.clientWidth - 10, event.pageY);
+        }
+      } else {
+        if (event.pageY + this.element.clientHeight > window.innerHeight) {
+          this.setPos(event.pageX, window.innerHeight - this.element.clientHeight - 10);
+        } else {
+          this.setPos(event.pageX, event.pageY);
+        }
+      }
       this.messageId = element.dataset.id;
     });
   }

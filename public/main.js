@@ -31,6 +31,7 @@ export const messages = [];
 
 const contextMenu = document.getElementById("ContextMenu");
 let messageReplyToId = null;
+let editingMessageId = null;
 
 export let currentMessageIndex = 50;
 export let grabMessageCount = 50;
@@ -61,6 +62,10 @@ export function setReplyId(id) {
   messageReplyToId = id;
 }
 
+export function setEditingMessageId(id) {
+  editingMessageId = id;
+}
+
 export function getMessageById(id) {
   return messages.find((msg) => msg.id === id);
 }
@@ -78,8 +83,9 @@ function clearAllRenderedMessages(messagesDiv) {
   });
 }
 
-function createMessage(username, message, timeCreated, id, usernameColor, replyTo = null) {
+function createMessage(username, message, timeCreated, id, usernameColor, wasEdited, replyTo = null) {
   const newMessage = new Message(username, message, timeCreated, id, usernameColor, replyTo);
+  newMessage.wasEdited = wasEdited;
   messages.push(newMessage);
 }
 
@@ -90,7 +96,7 @@ function createOrEditMessage(messageData) {
       existingMessage[key] = messageData[key];
     }
   } else {
-    createMessage(messageData.username, messageData.message, messageData.timeCreated, messageData.id, messageData.usernameColor, messageData.replyTo);
+    createMessage(messageData.username, messageData.message, messageData.timeCreated, messageData.id, messageData.usernameColor, messageData.wasEdited, messageData.replyTo);
   }
 }
 
@@ -218,7 +224,7 @@ function dontRenderNewMessages(messagesAfter, messageCount, serverId, callback) 
 
     if (Array.isArray(data.messages) && data.messages.length > 0) {
       data.messages.forEach((msg) => {
-        messages2.push(new Message(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.replyTo));
+        messages2.push(new Message(msg.username, msg.message, msg.timeCreated, msg.id, msg.usernameColor, msg.wasEdited, msg.replyTo));
       });
     }
 
@@ -227,6 +233,27 @@ function dontRenderNewMessages(messagesAfter, messageCount, serverId, callback) 
 }
 
 function sendMessage(username, message, loginToken, serverId) {
+  if (editingMessageId) {
+    sendToServer("/editMessage", { messageId: editingMessageId, message, loginToken, username, serverId }, (data) => {
+      if (data.code == 200) {
+        const messageToEdit = getMessageById(editingMessageId);
+        if (messageToEdit) {
+          messageToEdit.message = message;
+          messageToEdit.wasEdited = true;
+          clearAllRenderedMessages(document.getElementById("Messages"));
+          renderAllMessages(document.getElementById("Messages"));
+        }
+      } else {
+        alert("Failed to edit message: " + data.message);
+      }
+    });
+
+    const editingMessageCancelButton = document.getElementById("EditingMessageCancelButton");
+    editingMessageCancelButton.click();
+
+    return;
+  }
+
   const replyingTo = document.getElementById("ReplyingTo");
   const docElement = document.documentElement;
 
@@ -325,6 +352,13 @@ document.addEventListener("keydown", (event) => {
       docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
       return;
     }
+    if (editingMessageId) {
+      editingMessageId = null;
+      document.getElementById("EditingMessage").style.display = "none";
+      document.getElementById("MessageInput").value = "";
+      docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
+      return;
+    }
   }
 
   if (event.key == "Escape") {
@@ -364,6 +398,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const messageInput = document.getElementById("MessageInput");
   const replyingTo = document.getElementById("ReplyingTo");
   const editServerButton = document.getElementById("EditServerButton");
+  const editingMessageCancelButton = document.getElementById("EditingMessageCancelButton");
+  const editingMessageDiv = document.getElementById("EditingMessage");
   const docElement = document.documentElement;
 
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
@@ -401,6 +437,12 @@ document.addEventListener("DOMContentLoaded", () => {
     messageReplyToId = null;
     messageInput.value = "";
     replyingTo.style.display = "none";
+    docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
+  });
+
+  editingMessageCancelButton.addEventListener("click", () => {
+    messageInput.value = "";
+    editingMessageDiv.style.display = "none";
     docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
   });
 

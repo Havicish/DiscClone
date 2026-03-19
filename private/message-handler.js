@@ -9,6 +9,7 @@ class Message {
     this.timeCreated = Date.now();
     this.id = crypto.randomUUID();
     this.replyTo = replyTo;
+    this.wasEdited = false;
   }
 }
 
@@ -100,4 +101,32 @@ addAPIListener("/getMessageCount", true, (data, account) => {
   }
   const count = server.messages.filter((msg) => msg.timeCreated > after).length;
   return { code: 200, message: "Message count retrieved", body: { count } };
+});
+
+addAPIListener("/editMessage", true, (data, account) => {
+  if (data.message.trim() == "") {
+    return { code: 400, message: "Message cannot be empty" };
+  }
+  const server = findServerById(data.serverId);
+  if (!server) {
+    return { code: 403, message: "Access denied" };
+  }
+  if (!server.whitelist.includes(data.username)) {
+    return { code: 403, message: "Access denied" };
+  }
+  const messageIndex = server.messages.findIndex((msg) => msg.id === data.messageId);
+  if (messageIndex === -1) {
+    return { code: 404, message: "Message not found" };
+  }
+  const message = server.messages[messageIndex];
+  if (message.username !== account.username) {
+    return { code: 403, message: "You can only edit your own messages" };
+  }
+  if (data.message.trimEnd().length > 2000) {
+    return { code: 400, message: `Message too long: ${data.message.trimEnd().length}/2000` };
+  }
+  message.message = data.message.trimEnd();
+  message.wasEdited = true;
+  server.save();
+  return { code: 200, message: "Message edited successfully" };
 });

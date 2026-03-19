@@ -63,6 +63,7 @@ export class Message {
     this.usernameColor = usernameColor;
     this.repliedTo = replyTo;
     this.timeGroupDifference = 15; // In minutes
+    this.wasEdited = false;
   }
 
   render(messagesDiv, isHeader = false, isTrailing = false, isFirstMessage = false) {
@@ -115,7 +116,18 @@ export class Message {
     const textElement = document.createElement("span");
     textElement.className = "Text";
     appendFormattedMessageText(textElement, this.message);
-    textElement.appendChild(document.createTextNode(" "));
+    if (!this.wasEdited)
+      textElement.appendChild(document.createTextNode(" "));
+
+    if (this.wasEdited) {
+      const editedElement = document.createElement("span");
+      editedElement.className = "Edited";
+      editedElement.innerText = "(edited)";
+      textElement.appendChild(editedElement);
+    }
+
+    if (this.wasEdited)
+      textElement.appendChild(document.createTextNode(" "));
 
     const timeElement = document.createElement("span");
     timeElement.className = "Time";

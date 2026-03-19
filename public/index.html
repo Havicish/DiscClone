@@ -38,11 +38,16 @@
     <span>&nbsp;</span>
     <span id="ReplyingToText">Replying to: ___</span>
   </div>
+  <div id="EditingMessage" style="display: none;">
+    <button id="EditingMessageCancelButton">X</button>
+    <span>&nbsp;</span>
+    <span id="EditingMessageText">Editing message: ___</span>
+  </div>
   <textarea id="MessageInput" placeholder="Type a message..." spellcheck="true" autocorrect="off"></textarea>
   <button id="SendButton">></button>
   <div class="ContextMenu" id="ContextMenu">
     <button id="ReplyMessageButton">Reply</button>
-    <!--<button id="EditMessageButton">Edit</button>-->
+    <button id="EditMessageButton">Edit</button>
     <button id="CopyMessageButton">Copy text</button>
     <button id="DeleteMessageButton">Delete Message</button>
     <button id="CopyMessageIdButton">Copy message ID</button>
