@@ -58,6 +58,8 @@ function updateServerList() {
     const serverListDiv = document.getElementById("ServerList");
     const createServerDiv = document.getElementById("CreateServer");
     createServerDiv.style.display = "block";
+    const openInvitesButton = document.getElementById("OpenInvites");
+    openInvitesButton.style.display = "inline-block";
 
     Array.from(serverListDiv.children).forEach((child) => {
       child.remove();
@@ -109,6 +111,7 @@ function updateServerList() {
     }
 
     serverListDiv.appendChild(createServerDiv);
+    serverListDiv.appendChild(openInvitesButton);
   });
 }
 
@@ -118,6 +121,11 @@ document.addEventListener("DOMContentLoaded", () => {
     window.location.href = "/sign-in";
     return;
   }
+
+  const openInvitesButton = document.getElementById("OpenInvites");
+  openInvitesButton.addEventListener("click", () => {
+    window.location.href = "/server-invites";
+  });
 
   currentLoginToken = loginToken;
   currentUsername = localStorage.getItem("username");

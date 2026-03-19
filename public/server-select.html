@@ -230,6 +230,37 @@
       color: black;
     }
 
+    #OpenInvites {
+      height: 24px;
+      width: 100px;
+      border-radius: 8px;
+      border: none;
+      outline-color: white;
+      outline-style: solid;
+      outline-width: 1px;
+      background-color: black;
+      color: white;
+      font-family: "Nunito";
+      margin-top: 20px;
+    }
+
+    #OpenInvites:focus {
+      outline-color: #ff6900;
+      outline-style: solid;
+      outline-width: 1px;
+    }
+
+    #OpenInvites:hover {
+      background-color: white;
+      color: black;
+      outline-color: black;
+    }
+
+    #OpenInvites:active {
+      background-color: gray;
+      color: black;
+    }
+
     #CreateServerButton {
       height: 24px;
       width: 65px;
@@ -283,6 +314,7 @@
       <span>Create Server</span><!--
    --><button class="OpenServer" id="CreateServerButton">Create</button>
     </div>
+    <button id="OpenInvites">Open Invites</button>
   </div>
   <script src="./server-select-main.js"></script>
 </body>

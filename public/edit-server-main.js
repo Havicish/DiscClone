@@ -148,16 +148,17 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
-      sendToServer("/addServerWhitelist", {
+      sendToServer("/addServerInvite", {
         serverId: window.location.pathname.split("/").pop(),
         usernameToAdd: usernameToAdd,
         username: currentUsername,
-        loginToken
+        loginToken,
+        usernameToInvite: usernameToAdd
       }, (data) => {
         if (data.code == 200) {
-          alert("User added to whitelist successfully!");
+          alert("User added to invited successfully!");
         } else {
-          alert("Error adding user to whitelist: " + data.message);
+          alert("Error inviting user: " + data.message);
         }
       });
 

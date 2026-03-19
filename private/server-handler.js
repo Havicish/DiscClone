@@ -109,7 +109,10 @@ addAPIListener("/editServer", true, (data, account) => {
   return { code: 200, message: "Server edited successfully", body: { serverId } };
 });
 
+// Being replaced by invite system, so this endpoint is now deprecated and will be removed in the future
 addAPIListener("/addServerWhitelist", true, (data, account) => {
+  return { code: 410, message: "Gone; This endpoint is no longer available" };
+
   const serverId = data.serverId;
   const server = findServerById(serverId);
   if (!server) {

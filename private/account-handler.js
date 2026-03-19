@@ -21,6 +21,7 @@ class Account {
     this.lockedUntil = null;
     this.servers = [];
     this.usernameColor = "#fff";
+    this.serverInvites = [];
   }
 
   generateNewLoginToken() {
@@ -204,6 +205,89 @@ addAPIListener("/saveAccountChanges", true, (data, account) => {
   account.save();
 
   return { code: 200, message: "Account changes saved" };
+});
+
+addAPIListener("/addServerInvite", true, (data, account) => {
+  const findServerById = require("./server-handler").findServerById;
+
+  const server = findServerById(data.serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+
+  if (server.owner != account.username) {
+    return { code: 403, message: "You do not have permission to invite users to this server" };
+  }
+
+  const accountToInvite = findAccountByUsername(data.usernameToInvite);
+  if (accountToInvite.servers.includes(data.serverId)) {
+    return { code: 400, message: "User is already in the server" };
+  }
+
+  if (!accountToInvite) {
+    return { code: 404, message: "Account not found" };
+  }
+
+  if (accountToInvite.serverInvites.includes(data.serverId)) {
+    return { code: 400, message: "Invite already exists" };
+  }
+
+  accountToInvite.serverInvites.push(data.serverId);
+  accountToInvite.save();
+
+  return { code: 200, message: "Invite added successfully" };
+});
+
+addAPIListener("/acceptServerInvite", true, (data, account) => {
+  const findServerById = require("./server-handler").findServerById;
+
+  const serverId = data.serverId;
+  if (!account.serverInvites.includes(serverId)) {
+    return { code: 400, message: "Invite not found" };
+  }
+
+  const server = findServerById(serverId);
+  if (!server) {
+    return { code: 404, message: "Server not found" };
+  }
+
+  if (!server.whitelist.includes(account.username)) {
+    server.whitelist.push(account.username);
+    server.save();
+  }
+
+  account.servers.push(serverId);
+  account.serverInvites = account.serverInvites.filter(id => id !== serverId);
+  account.save();
+
+  return { code: 200, message: "Invite accepted successfully", body: { serverId } };
+});
+
+addAPIListener("/declineServerInvite", true, (data, account) => {
+  const serverId = data.serverId;
+  if (!account.serverInvites.includes(serverId)) {
+    return { code: 400, message: "Invite not found" };
+  }
+
+  account.serverInvites = account.serverInvites.filter(id => id !== serverId);
+  account.save();
+
+  return { code: 200, message: "Invite declined successfully" };
+});
+
+addAPIListener("/getServerInvites", true, (data, account) => {
+  const findServerById = require("./server-handler").findServerById;
+
+  const invites = account.serverInvites.map(serverId => {
+    const server = findServerById(serverId);
+    if (server) {
+      return { serverId, serverName: server.name };
+    } else {
+      return null;
+    }
+  }).filter(invite => invite !== null);
+
+  return { code: 200, message: "Invites retrieved successfully", body: { invites } };
 });
 
 module.exports = {
