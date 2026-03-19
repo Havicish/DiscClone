@@ -32,8 +32,8 @@ export const messages = [];
 const contextMenu = document.getElementById("ContextMenu");
 let messageReplyToId = null;
 
-let currentMessageIndex = 50;
-let grabMessageCount = 50;
+export let currentMessageIndex = 50;
+export let grabMessageCount = 50;
 
 let timeBlurred = null;
 

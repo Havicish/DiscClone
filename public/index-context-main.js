@@ -1,4 +1,4 @@
-import { messages, setReplyId, backendURL, currentUsername, currentLoginToken, currentServerId, getNewMessages } from "./main.js";
+import { messages, setReplyId, backendURL, currentUsername, currentLoginToken, currentServerId, getNewMessages, currentMessageIndex, grabMessageCount } from "./main.js";
 
 const messagesDiv = document.getElementById("Messages");
 
@@ -25,7 +25,7 @@ document.getElementById("DeleteMessageButton").addEventListener("click", () => {
     }).then((response) => response.json())
       .then((data) => {
         if (data.code == 200) {
-          getNewMessages(0, currentServerId);
+          getNewMessages(currentMessageIndex, grabMessageCount, currentServerId);
         }
       });
   }
