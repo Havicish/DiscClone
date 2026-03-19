@@ -84,6 +84,11 @@ body {
 .Message {
   background-color: #000;
   transition: background-color 0.3s;
+  white-space: pre-wrap;
+}
+
+.Text {
+  color: red;
 }
 
 #SendButton {
