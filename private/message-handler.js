@@ -70,22 +70,22 @@ addAPIListener("/deleteMessage", true, (data, account) => {
 });
 
 addAPIListener("/sendMessage", true, (data, account) => {
-    if (data.message.trim() == "") {
-      return { code: 400, message: "Message cannot be empty" };
-    }
-    const server = findServerById(data.serverId);
-    if (!server.whitelist.includes(data.username)) {
-      return { code: 403, message: "Access denied" };
-    }
-    let msg = new Message(account.username, data.message.trimEnd(), data.replyTo);
-    if (data.message.trimEnd().length > 2000) {
-      return { code: 400, message: `Message too long: ${data.message.trimEnd().length}/2000` };
-    }
-    if (server) {
-      server.messages.push(msg);
-      server.save();
-    }
-    return { code: 200, message: "Message sent successfully" };
+  if (data.message.trim() == "") {
+    return { code: 400, message: "Message cannot be empty" };
+  }
+  const server = findServerById(data.serverId);
+  if (!server.whitelist.includes(data.username)) {
+    return { code: 403, message: "Access denied" };
+  }
+  let msg = new Message(account.username, data.message.trimEnd(), data.replyTo);
+  if (data.message.trimEnd().length > 2000) {
+    return { code: 400, message: `Message too long: ${data.message.trimEnd().length}/2000` };
+  }
+  if (server) {
+    server.messages.push(msg);
+    server.save();
+  }
+  return { code: 200, message: "Message sent successfully" };
 });
 
 addAPIListener("/getMessageCount", true, (data, account) => {

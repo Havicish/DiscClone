@@ -183,6 +183,12 @@ export function getNewMessages(messagesAfter, messageCount, serverId) {
   });
 }
 
+export function deleteMessage(messageId) {
+  messages.splice(messages.findIndex((msg) => msg.id === messageId), 1);
+  clearAllRenderedMessages(document.getElementById("Messages"));
+  renderAllMessages(document.getElementById("Messages")); 
+}
+
 function getNewMessagesNoScroll(messagesAfter, messageCount, serverId) {
   sendToServer("/getMessages", { after: messagesAfter, count: messageCount, serverId: serverId, loginToken: currentLoginToken, username: currentUsername }, (data) => {
     const messagesDiv = document.getElementById("Messages");
@@ -444,4 +450,4 @@ setInterval(() => {
   dontRenderNewMessages(currentMessageIndex, grabMessageCount, currentServerId, (messages2) => {
     lastCheckMessages = messages2;
   });
-}, 400);
+}, 1000);
