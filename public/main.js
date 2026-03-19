@@ -444,4 +444,4 @@ setInterval(() => {
   dontRenderNewMessages(currentMessageIndex, grabMessageCount, currentServerId, (messages2) => {
     lastCheckMessages = messages2;
   });
-}, 2000);
+}, 400);
