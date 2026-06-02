@@ -243,6 +243,9 @@ function sendMessage(username, message, loginToken, serverId) {
           clearAllRenderedMessages(document.getElementById("Messages"));
           renderAllMessages(document.getElementById("Messages"));
         }
+        editingMessageId = null;
+        document.getElementById("EditingMessage").style.display = "none";
+        docElement.style.setProperty("--messages-height", "calc(100vh - 170px)");
       } else {
         alert("Failed to edit message: " + data.message);
       }

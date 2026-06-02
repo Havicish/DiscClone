@@ -87,6 +87,8 @@ class Account {
 }
 
 function findAccountByUsername(username) {
+  if (!username) return null;
+
   username = username.toLowerCase();
   const localPath = path.join(globalAccountsDirPath, `${username}.json`);
 
